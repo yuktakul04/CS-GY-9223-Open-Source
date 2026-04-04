@@ -32,6 +32,9 @@ nav:
   - Getting Started: getting-started.md
   - API Reference: api-reference.md
   - Telegram Implementation: telegram-implementation.md
+  - Chat Client Service: chat-client-service.md
+  - Service API Client: chat-client-service-api-client.md
+  - Service Adapter: chat-client-adapter.md
 
 markdown_extensions:
   - pymdownx.highlight:

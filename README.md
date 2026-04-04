@@ -1,6 +1,6 @@
 # CS-GY-9223 Open Source
 
-A chat client interface and a Telegram implementation scaffold.
+A chat client interface, Telegram implementation, and a deployed FastAPI microservice with OAuth authentication.
 
 ## Team
 
@@ -20,9 +20,34 @@ A chat client interface and a Telegram implementation scaffold.
 - ivanearisty
 - AranyaAryaman
 
+## Live Deployment
+
+The service is deployed on Render:
+
+| Endpoint | URL |
+|---|---|
+| Health | https://chat-client-service.onrender.com/health |
+| Swagger UI | https://chat-client-service.onrender.com/docs |
+| OpenAPI spec | https://chat-client-service.onrender.com/openapi.json |
+| Login | https://chat-client-service.onrender.com/auth/login |
+
+### Required environment variables (Render)
+
+| Variable | Purpose |
+|---|---|
+| `TELEGRAM_BOT_TOKEN` | Bot credentials for Telegram Login Widget HMAC verification |
+| `TELEGRAM_API_ID` | Telegram API credentials |
+| `TELEGRAM_API_HASH` | Telegram API credentials |
+| `TELEGRAM_SESSION_STRING` | Persistent Telethon session string |
+| `SERVICE_BASE_URL` | Public HTTPS base URL (`https://chat-client-service.onrender.com`) |
+
+### CI/CD
+
+CircleCI runs on every push: lint (`ruff`) → format check → type check (`mypy`) → tests + coverage (≥85%). On push to the deployment branch, a Render deploy hook is triggered automatically (`RENDER_DEPLOY_HOOK_URL` env var in CircleCI project settings).
+
 ## Prerequisites
 
-- Python 3.10 or higher
+- Python 3.12
 - [uv](https://docs.astral.sh/uv/) package manager
 
 ## Installation
@@ -62,23 +87,40 @@ uv run mkdocs serve
 
 ```
 .
-├── components/      # Interface + implementation components
-│   ├── chat_client_api/         # chat_client_api interface component
-│   └── telegram_client_impl/    # Telegram implementation component (scaffold)
-├── tests/           # Test suite
+├── components/
+│   ├── chat_client_api/                 # Abstract interface (Client, Message, Channel)
+│   ├── telegram_client_impl/            # Telegram implementation of chat_client_api
+│   ├── chat_client_service/             # FastAPI microservice (Telegram OAuth + chat)
+│   ├── chat_client_service_api_client/  # Auto-generated OpenAPI client + stable wrapper
+│   └── chat_client_adapter/             # Adapter: implements chat_client_api over HTTP
+├── tests/           # E2E + integration tests
 ├── docs/            # MkDocs documentation
 ├── .circleci/       # CircleCI CI/CD configuration
+├── render.yaml      # Render deployment configuration
 ├── pyproject.toml   # Project configuration
 └── README.md
 ```
 
-## Dependency Injection Usage
+## Usage
 
+**Direct library (HW1 style):**
 ```python
-import telegram_client_impl  # injects factory hooks into chat_client_api
+import telegram_client_impl  # registers Telegram implementation
 from chat_client_api import get_client
 
-client = get_client(interactive=False)
+client = get_client()
+for msg in client.get_messages(channel_id="my_channel"):
+    print(msg.text)
+```
+
+**Via deployed service (HW2 — same consumer code):**
+```python
+import chat_client_adapter  # registers service-backed implementation
+from chat_client_api import get_client
+
+client = get_client()  # now backed by the HTTP service
+for msg in client.get_messages(channel_id="my_channel"):
+    print(msg.text)  # identical call, different backend
 ```
 
 ## License

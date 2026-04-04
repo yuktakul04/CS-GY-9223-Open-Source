@@ -6,11 +6,12 @@ orbs:
 jobs:
   test:
     docker:
-      - image: cimg/python:3.10
+      - image: cimg/python:3.12
     environment:
-      # Set TELEGRAM_E2E_ENABLED=1 to run E2E. Add TELEGRAM_API_ID,
-      # TELEGRAM_API_HASH, TELEGRAM_BOT_TOKEN in CircleCI project settings.
-      TELEGRAM_E2E_ENABLED: "1"
+      # Set CHAT_E2E_LIVE=1 and CHAT_CLIENT_SERVICE_BASE_URL to run live E2E tests.
+      # Also add TELEGRAM_API_ID, TELEGRAM_API_HASH, TELEGRAM_BOT_TOKEN in
+      # CircleCI project settings for live Telegram access.
+      CHAT_E2E_LIVE: "0"
     steps:
       - checkout
       - run:
@@ -41,9 +42,20 @@ jobs:
       - store_artifacts:
           path: coverage.xml
 
+  deploy:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run:
+          name: Trigger Render deployment
+          command: |
+            curl -fsSL -X POST "$RENDER_DEPLOY_HOOK_URL" \
+              -o /dev/null \
+              -w "HTTP %{http_code}\n"
+
   docs:
     docker:
-      - image: cimg/python:3.10
+      - image: cimg/python:3.12
     steps:
       - checkout
       - run:
@@ -64,3 +76,9 @@ workflows:
     jobs:
       - test
       - docs
+      - deploy:
+          requires:
+            - test
+          filters:
+            branches:
+              only: microservice-implementation

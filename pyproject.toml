@@ -8,7 +8,13 @@ requires-python = ">=3.10"
 authors = [
     {name = "Team 4"}
 ]
-dependencies = ["telegram-client-impl"]
+dependencies = [
+    "anyio>=4.13.0",
+    "attrs>=23.0.0",
+    "fastapi>=0.135.3",
+    "httpx>=0.28.1",
+    "telegram-client-impl",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -16,6 +22,9 @@ dev = [
     "pytest-cov>=4.1.0",
     "ruff>=0.3.0",
     "mypy>=1.8.0",
+    "fastapi>=0.115.0",
+    "pydantic>=2.8.0",
+    "httpx>=0.27.0",
 ]
 docs = [
     "mkdocs>=1.5.0",
@@ -44,51 +53,90 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["chat_client_api", "telegram_client_impl"]
+known-first-party = [
+    "chat_client_api",
+    "telegram_client_impl",
+    "chat_client_service",
+    "chat_client_service_api_client",
+    "chat_client_adapter",
+]
 
 [tool.ruff.lint.per-file-ignores]
+# Auto-generated OpenAPI client — do not hand-edit style
+"components/chat_client_service_api_client/src/chat_client_service_client/**" = ["ALL"]
 "**/tests/**" = [
+    "ARG002",   # stub/mock implementations of ABCs have unused params by design
     "INP001",   # test directories intentionally omit __init__.py per assignment
+    "PLC0415",  # deferred imports inside test functions used for isolation
     "PLR2004",  # allow magic values in test assertions
+    "S105",     # "bearer" is OAuth token_type, not a password
     "S106",     # allow fake tokens in test fixtures
     "SLF001",   # allow accessing _client for mocking in tests
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "components/chat_client_api/tests", "components/telegram_client_impl/tests"]
-pythonpath = [".", "components/chat_client_api/src", "components/telegram_client_impl/src"]
+testpaths = [
+    "tests",
+    "components/chat_client_api/tests",
+    "components/telegram_client_impl/tests",
+    "components/chat_client_service/tests",
+    "components/chat_client_service_api_client/tests",
+    "components/chat_client_adapter/tests",
+]
+pythonpath = [
+    ".",
+    "components/chat_client_api/src",
+    "components/telegram_client_impl/src",
+    "components/chat_client_service/src",
+    "components/chat_client_service_api_client/src",
+    "components/chat_client_adapter/src",
+]
 markers = [
     "e2e: marks end-to-end tests that may require external credentials",
 ]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
 strict = true
 
 [[tool.mypy.overrides]]
-module = [
-    "telethon",
-    "telethon.*",
-]
+module = ["telethon.*"]
 ignore_missing_imports = true
 
 [tool.uv.workspace]
-members = ["components/chat_client_api", "components/telegram_client_impl"]
+members = [
+    "components/chat_client_api",
+    "components/telegram_client_impl",
+    "components/chat_client_service",
+    "components/chat_client_service_api_client",
+    "components/chat_client_adapter",
+]
 
 [tool.uv.sources]
 chat-client-api = { workspace = true }
 telegram-client-impl = { workspace = true }
+chat-client-service = { workspace = true }
+chat-client-service-api-client = { workspace = true }
+chat-client-adapter = { workspace = true }
 
 [tool.coverage.run]
 source = ["components"]
 branch = true
-omit = ["*/tests/*"]
+omit = ["*/tests/*", "*/chat_client_service_client/*"]
 
 [tool.coverage.report]
-fail_under = 80
+fail_under = 85
 show_missing = true
 exclude_lines = [
     "pragma: no cover",
     "if TYPE_CHECKING:",
     "@abstractmethod",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.20.0",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.1.0",
+    "uvicorn>=0.43.0",
 ]

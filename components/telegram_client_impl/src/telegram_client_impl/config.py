@@ -6,12 +6,13 @@ from os import getenv
 
 @dataclass(frozen=True)
 class TelegramClientConfig:
-    """Configuration required to initialize a Telegram client scaffold."""
+    """Configuration required to initialize a Telegram client."""
 
     api_id: str | None
     api_hash: str | None
     bot_token: str | None
     session_name: str = "telegram_session"
+    session_string: str | None = None  # takes priority over session_name on Render
     interactive: bool = False
 
     @classmethod
@@ -22,5 +23,6 @@ class TelegramClientConfig:
             api_hash=getenv("TELEGRAM_API_HASH"),
             bot_token=getenv("TELEGRAM_BOT_TOKEN"),
             session_name=getenv("TELEGRAM_SESSION_NAME", "telegram_session"),
+            session_string=getenv("TELEGRAM_SESSION_STRING"),
             interactive=interactive,
         )

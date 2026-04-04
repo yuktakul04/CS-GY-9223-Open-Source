@@ -2,6 +2,7 @@
 
 from collections.abc import Iterator
 
+from telethon.sessions import StringSession
 from telethon.sync import TelegramClient as _TeleClient
 
 from chat_client_api.channel import Channel
@@ -109,8 +110,13 @@ class TelegramClient(Client):
             raise TelegramAuthError(msg)
 
         if self._client is None:
+            session = (
+                StringSession(self._config.session_string)
+                if self._config.session_string
+                else self._config.session_name
+            )
             self._client = _TeleClient(
-                self._config.session_name,
+                session,
                 int(self._config.api_id),
                 self._config.api_hash,
             )

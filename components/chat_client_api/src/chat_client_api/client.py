@@ -2,9 +2,31 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
+from typing import Protocol
 
 from chat_client_api.channel import Channel
 from chat_client_api.message import Message
+
+
+class _ClientFactory(Protocol):
+    """Protocol for a callable that produces a Client instance."""
+
+    def __call__(self, *, interactive: bool = False) -> "Client":
+        """Return a Client instance."""
+        ...
+
+
+_impl: _ClientFactory | None = None
+
+
+def register(factory: _ClientFactory) -> None:
+    """Register the concrete Client factory for use by get_client.
+
+    Call this once at application start-up (e.g. from an adapter's
+    ``__init__.py``) to wire in an implementation without monkey-patching.
+    """
+    global _impl  # noqa: PLW0603
+    _impl = factory
 
 
 class Client(ABC):
@@ -77,7 +99,10 @@ def get_client(*, interactive: bool = False) -> Client:
         A Client instance.
 
     Raises:
-        NotImplementedError: If no implementation has been injected.
+        NotImplementedError: If no implementation has been registered via
+            :func:`register`.
 
     """
-    raise NotImplementedError
+    if _impl is None:
+        raise NotImplementedError
+    return _impl(interactive=interactive)

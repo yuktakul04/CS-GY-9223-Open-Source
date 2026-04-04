@@ -27,6 +27,6 @@ def test_importing_telegram_impl_injects_factories() -> None:
 
     # Import here so collection does not eagerly load telegram_client_impl and
     # inject before the interface tests run. noqa: PLC0415 is intentional.
-    from telegram_client_impl.client import TelegramClient  # noqa: PLC0415
+    from telegram_client_impl.client import TelegramClient
 
     assert isinstance(injected_client, TelegramClient)

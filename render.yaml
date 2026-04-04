@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: chat-client-service
+    runtime: python
+    pythonVersion: "3.12.0"
+    buildCommand: >-
+      pip install -e components/chat_client_api
+      -e components/telegram_client_impl
+      -e components/chat_client_service
+      -e components/chat_client_service_api_client
+      -e components/chat_client_adapter
+    startCommand: uvicorn chat_client_service.app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: TELEGRAM_API_ID
+        sync: false
+      - key: TELEGRAM_API_HASH
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_SESSION_NAME
+        value: telegram_session
+      - key: TELEGRAM_SESSION_STRING
+        sync: false
+      - key: SERVICE_BASE_URL
+        value: https://chat-client-service.onrender.com
