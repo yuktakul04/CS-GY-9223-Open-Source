@@ -7,7 +7,7 @@ stubbed is the AI assistant (so the test doesn't need provider creds).
 
 from __future__ import annotations
 
-from collections.abc import Generator
+from typing import TYPE_CHECKING
 
 import pytest
 from fastapi.testclient import TestClient
@@ -15,6 +15,9 @@ from fastapi.testclient import TestClient
 from chat_client_service.app import app
 from chat_client_service.routers.telegram import get_telegram_assistant
 from telegram_client_impl.store import get_store
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 @pytest.fixture(autouse=True)

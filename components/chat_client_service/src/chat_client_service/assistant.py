@@ -8,14 +8,14 @@ import os
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-LOGGER = logging.getLogger(__name__)
-
 from api.issue import Status
 from trello_client_impl import TrelloClient
 
 import ai_client_api
 from issue_tracker_integration.client import get_bridge
 from issue_tracker_integration.trello_adapter import TrelloClientAdapter
+
+LOGGER = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from ai_client_api import AIClient, ToolCallResponse

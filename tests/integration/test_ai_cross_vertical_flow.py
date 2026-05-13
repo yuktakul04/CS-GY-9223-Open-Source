@@ -5,22 +5,38 @@ with real ABC subclasses for every collaborator — no Mocks. The point is to
 prove the wiring actually creates issues end-to-end, not just that mocked
 methods were called.
 """
+# mypy: disable-error-code="misc"
+# Shared ABCs from the issue-tracker and chat git deps ship without py.typed,
+# so mypy treats them as ``Any``; subclassing for test fakes is intentional.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ai_client_api import AIClient, ToolCallResponse
 from api.board import Board
 from api.client import Client
 from api.exceptions import BoardNotFoundError, IssueNotFoundError
 from api.issue import Issue, Status
-from chat_client_api import ChatClient, Channel, Message
+
+from ai_client_api import AIClient, ToolCallResponse
+from chat_client_api import Channel, ChatClient, Message
 from chat_client_service.assistant import TelegramAssistantOrchestrator
 from issue_tracker_integration.client import get_bridge
 from issue_tracker_integration.orchestrator import IssueTrackerOrchestrator
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+
+def _board_not_found(board_id: str) -> BoardNotFoundError:
+    msg = f"board {board_id} not found"
+    return BoardNotFoundError(msg)
+
+
+def _issue_not_found(issue_id: str) -> IssueNotFoundError:
+    msg = f"issue {issue_id} not found"
+    return IssueNotFoundError(msg)
 
 
 # ---------------------------------------------------------------------------
@@ -32,6 +48,7 @@ class FakeAIClient(AIClient):
     """AIClient that emits a pre-programmed ToolCallResponse."""
 
     def __init__(self, response: str | ToolCallResponse) -> None:
+        """Store the canned response to return on every send_message call."""
         self._response = response
         self.calls: list[dict[str, Any]] = []
 
@@ -41,6 +58,7 @@ class FakeAIClient(AIClient):
         context: dict[str, Any] | None = None,
         tools: list[dict[str, Any]] | None = None,
     ) -> str | ToolCallResponse:
+        """Record the call and return the canned response."""
         self.calls.append({"prompt": prompt, "context": context, "tools": tools})
         return self._response
 
@@ -51,11 +69,13 @@ class _Board(Board):
     _name: str
 
     @property
-    def id(self) -> str:  # noqa: A003
+    def id(self) -> str:
+        """Return the board's ID."""
         return self._id
 
     @property
     def board_name(self) -> str:
+        """Return the board's display name."""
         return self._name
 
 
@@ -70,31 +90,38 @@ class _Issue(Issue):
     _due_date: str | None = None
 
     @property
-    def id(self) -> str:  # noqa: A003
+    def id(self) -> str:
+        """Return the issue's ID."""
         return self._id
 
     @property
     def title(self) -> str:
+        """Return the issue title."""
         return self._title
 
     @property
     def desc(self) -> str:
+        """Return the issue description."""
         return self._desc
 
     @property
     def members(self) -> list[str] | None:
+        """Return assignee identifiers."""
         return self._members
 
     @property
     def due_date(self) -> str | None:
+        """Return the issue due date if set."""
         return self._due_date
 
     @property
     def status(self) -> Status:
+        """Return the issue status."""
         return self._status
 
     @property
     def board_id(self) -> str:
+        """Return the board the issue belongs to."""
         return self._board_id
 
 
@@ -102,6 +129,7 @@ class InMemoryIssueClient(Client):
     """In-memory ``api.client.Client`` backed by plain dicts."""
 
     def __init__(self) -> None:
+        """Initialise empty board and issue stores."""
         self.boards: dict[str, _Board] = {}
         self.issues: dict[str, _Issue] = {}
         self._next_issue = 1
@@ -110,14 +138,17 @@ class InMemoryIssueClient(Client):
     # boards -----------------------------------------------------------------
 
     def get_boards(self) -> Iterator[Board]:
+        """Yield every stored board."""
         return iter(list(self.boards.values()))
 
     def get_board(self, board_id: str) -> Board:
+        """Return one board by ID."""
         if board_id not in self.boards:
-            raise BoardNotFoundError(f"board {board_id} not found")
+            raise _board_not_found(board_id)
         return self.boards[board_id]
 
     def create_board(self, name: str) -> Board:
+        """Create and store a new board."""
         board_id = f"b-{self._next_board}"
         self._next_board += 1
         board = _Board(_id=board_id, _name=name)
@@ -125,29 +156,33 @@ class InMemoryIssueClient(Client):
         return board
 
     def update_board(self, board_id: str, name: str | None = None) -> Board:
+        """Rename a stored board."""
         board = self.boards.get(board_id)
         if board is None:
-            raise BoardNotFoundError(f"board {board_id} not found")
+            raise _board_not_found(board_id)
         if name is not None:
-            board._name = name  # noqa: SLF001
+            board._name = name
         return board
 
     def delete_board(self, board_id: str) -> bool:
+        """Delete a board by ID."""
         if board_id not in self.boards:
-            raise BoardNotFoundError(f"board {board_id} not found")
+            raise _board_not_found(board_id)
         del self.boards[board_id]
         return True
 
     # issues -----------------------------------------------------------------
 
     def get_issues(self, board_id: str) -> Iterator[Issue]:
+        """Yield every issue on the given board."""
         if board_id not in self.boards:
-            raise BoardNotFoundError(f"board {board_id} not found")
+            raise _board_not_found(board_id)
         return iter([i for i in self.issues.values() if i.board_id == board_id])
 
     def get_issue(self, issue_id: str) -> Issue:
+        """Return one issue by ID."""
         if issue_id not in self.issues:
-            raise IssueNotFoundError(f"issue {issue_id} not found")
+            raise _issue_not_found(issue_id)
         return self.issues[issue_id]
 
     def create_issue(  # noqa: PLR0913
@@ -159,8 +194,9 @@ class InMemoryIssueClient(Client):
         due_date: str | None = None,
         status: Status = Status.TO_DO,
     ) -> Issue:
+        """Create and store a new issue on the given board."""
         if board_id not in self.boards:
-            raise BoardNotFoundError(f"board {board_id} not found")
+            raise _board_not_found(board_id)
         issue_id = f"i-{self._next_issue}"
         self._next_issue += 1
         issue = _Issue(
@@ -185,28 +221,30 @@ class InMemoryIssueClient(Client):
         status: Status | None = None,
         board_id: str | None = None,
     ) -> Issue:
+        """Update fields on an existing issue."""
         issue = self.issues.get(issue_id)
         if issue is None:
-            raise IssueNotFoundError(f"issue {issue_id} not found")
+            raise _issue_not_found(issue_id)
         if title is not None:
-            issue._title = title  # noqa: SLF001
+            issue._title = title
         if desc is not None:
-            issue._desc = desc  # noqa: SLF001
+            issue._desc = desc
         if members is not None:
-            issue._members = members  # noqa: SLF001
+            issue._members = members
         if due_date is not None:
-            issue._due_date = due_date  # noqa: SLF001
+            issue._due_date = due_date
         if status is not None:
-            issue._status = status  # noqa: SLF001
+            issue._status = status
         if board_id is not None:
             if board_id not in self.boards:
-                raise BoardNotFoundError(f"board {board_id} not found")
-            issue._board_id = board_id  # noqa: SLF001
+                raise _board_not_found(board_id)
+            issue._board_id = board_id
         return issue
 
     def delete_issue(self, issue_id: str) -> bool:
+        """Delete an issue by ID."""
         if issue_id not in self.issues:
-            raise IssueNotFoundError(f"issue {issue_id} not found")
+            raise _issue_not_found(issue_id)
         del self.issues[issue_id]
         return True
 
@@ -215,10 +253,12 @@ class RecordingChatClient(ChatClient):
     """ChatClient that records every send_message in a list."""
 
     def __init__(self) -> None:
+        """Initialise the sent-message log."""
         self.sent: list[Message] = []
         self._next = 1
 
     def send_message(self, channel_id: str, text: str) -> Message:
+        """Record an outbound message and return the stored object."""
         message = Message(
             message_id=f"m-{self._next}",
             channel=channel_id,
@@ -231,9 +271,11 @@ class RecordingChatClient(ChatClient):
         return message
 
     def get_channels(self) -> list[Channel]:
+        """Return the single fixed test channel."""
         return [Channel(channel_id="chat-1", name="Test", channel_type="private")]
 
     def get_channel(self, channel_id: str) -> Channel:
+        """Return the matching channel or raise ``ValueError``."""
         for c in self.get_channels():
             if c.channel_id == channel_id:
                 return c
@@ -246,10 +288,12 @@ class RecordingChatClient(ChatClient):
         limit: int = 10,
         cursor: str | None = None,
     ) -> list[Message]:
+        """Return every recorded message on ``channel_id``."""
         del limit, cursor
         return [m for m in self.sent if m.channel == channel_id]
 
     def get_message(self, message_id: str) -> Message:
+        """Return one recorded message by ID."""
         for m in self.sent:
             if m.message_id == message_id:
                 return m
@@ -257,6 +301,7 @@ class RecordingChatClient(ChatClient):
         raise ValueError(msg)
 
     def delete_message(self, message_id: str) -> None:
+        """Delete one recorded message by ID."""
         for i, m in enumerate(self.sent):
             if m.message_id == message_id:
                 del self.sent[i]
