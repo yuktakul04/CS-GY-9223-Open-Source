@@ -59,8 +59,29 @@ jobs:
           name: Build documentation
           command: uv run mkdocs build
 
+  deploy:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run:
+          name: Trigger Render deploy hook
+          command: |
+            if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+              echo "RENDER_DEPLOY_HOOK_URL is not set" >&2
+              exit 1
+            fi
+            curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"
+
 workflows:
   main:
     jobs:
       - test
       - docs
+      - deploy:
+          requires:
+            - test
+          filters:
+            branches:
+              only:
+                - gemini-client
+                - main
