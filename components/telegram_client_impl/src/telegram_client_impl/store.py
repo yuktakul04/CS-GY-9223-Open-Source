@@ -12,6 +12,14 @@ from time import time
 
 from chat_client_api import Channel, Message
 
+_DEFAULT_STORE_PATH = ".data/chat_client.sqlite3"
+
+
+def _store_path_from_env() -> str:
+    raw = os.getenv("CHAT_CLIENT_STORE_PATH", _DEFAULT_STORE_PATH)
+    stripped = (raw or "").strip()
+    return stripped or _DEFAULT_STORE_PATH
+
 
 @dataclass(frozen=True)
 class StoredMessage:
@@ -61,11 +69,7 @@ class BotUpdateStore:
 
     def __init__(self, *, db_path: str | None = None) -> None:
         """Initialize storage and ensure schema exists."""
-        env_db_path = os.getenv(
-            "CHAT_CLIENT_STORE_PATH",
-            ".data/chat_client.sqlite3",
-        )
-        self._db_path = db_path or env_db_path
+        self._db_path = db_path or _store_path_from_env()
         self._lock = RLock()
         if self._db_path != ":memory:":
             Path(self._db_path).parent.mkdir(parents=True, exist_ok=True)
@@ -487,7 +491,7 @@ _STORE_PATH: str | None = None
 def get_store() -> BotUpdateStore:
     """Return the configured bot update store."""
     global _STORE, _STORE_PATH  # noqa: PLW0603
-    path = os.getenv("CHAT_CLIENT_STORE_PATH", ".data/chat_client.sqlite3")
+    path = _store_path_from_env()
     if _STORE is None or path != _STORE_PATH:
         _STORE = BotUpdateStore(db_path=path)
         _STORE_PATH = path

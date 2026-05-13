@@ -16,6 +16,7 @@ dependencies = [
     "issue-tracker-integration",
     "ospd-issue-tracker-api",
     "openai-client-impl",
+    "gemini-client-impl",
 ]
 
 [project.optional-dependencies]
@@ -67,6 +68,7 @@ known-first-party = [
     "issue_tracker_integration",
     "ai_client_api",
     "openai_client_impl",
+    "gemini_client_impl",
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -92,6 +94,7 @@ testpaths = [
     "components/issue_tracker_integration/tests",
     "components/ai_client_api/tests",
     "components/openai_client_impl/tests",
+    "components/gemini_client_impl/tests",
 ]
 pythonpath = [
     ".",
@@ -102,6 +105,7 @@ pythonpath = [
     "components/issue_tracker_integration/src",
     "components/ai_client_api/src",
     "components/openai_client_impl/src",
+    "components/gemini_client_impl/src",
 ]
 markers = [
     "e2e: marks end-to-end tests that may require external credentials",
@@ -154,6 +158,7 @@ members = [
     "components/issue_tracker_integration",
     "components/ai_client_api",
     "components/openai_client_impl",
+    "components/gemini_client_impl",
 ]
 
 [tool.uv.sources]
@@ -168,6 +173,7 @@ chat-client-adapter = { workspace = true }
 issue-tracker-integration = { workspace = true }
 ai-client-api = { workspace = true }
 openai-client-impl = { workspace = true }
+gemini-client-impl = { workspace = true }
 
 [tool.coverage.run]
 source = ["components"]

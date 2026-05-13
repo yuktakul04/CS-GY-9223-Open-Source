@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import json
+import logging
 from time import perf_counter, time
 from typing import TYPE_CHECKING
 
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from chat_client_service.middleware.cloudwatch import get_telemetry_logger
+
+_LOGGER = logging.getLogger(__name__)
 
 _NAMESPACE = "OSPSD/HW3"
 _SERVICE = "chat_client_service"
@@ -85,6 +88,32 @@ async def _publish_request_metrics(  # noqa: PLR0913
     get_telemetry_logger().info(json.dumps(event))
 
 
+async def _publish_request_metrics_safe(  # noqa: PLR0913
+    *,
+    service: str,
+    endpoint: str,
+    latency_ms: float,
+    status_code: int,
+    success: int,
+    failure: int,
+) -> None:
+    """Emit telemetry; swallow failures so logging cannot break HTTP responses."""
+    try:
+        await _publish_request_metrics(
+            service=service,
+            endpoint=endpoint,
+            latency_ms=latency_ms,
+            status_code=status_code,
+            success=success,
+            failure=failure,
+        )
+    except Exception:
+        _LOGGER.exception(
+            "Failed to publish request telemetry for endpoint %s",
+            endpoint,
+        )
+
+
 class TelemetryMiddleware(BaseHTTPMiddleware):
     """Emit EMF telemetry for every HTTP request."""
 
@@ -100,7 +129,7 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
         except Exception:
             latency_ms = (perf_counter() - start) * 1000
-            await _publish_request_metrics(
+            await _publish_request_metrics_safe(
                 service=_SERVICE,
                 endpoint=_endpoint_from_request(request),
                 latency_ms=latency_ms,
@@ -112,7 +141,7 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
 
         latency_ms = (perf_counter() - start) * 1000
         is_failure = int(response.status_code >= _FAILURE_STATUS_THRESHOLD)
-        await _publish_request_metrics(
+        await _publish_request_metrics_safe(
             service=_SERVICE,
             endpoint=_endpoint_from_request(request),
             latency_ms=latency_ms,

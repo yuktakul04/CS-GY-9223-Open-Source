@@ -20,6 +20,22 @@ import jwt
 from telegram_client_impl.store import StoredOidcState, get_store
 
 
+def _env_strip(name: str) -> str | None:
+    raw = getenv(name)
+    if raw is None:
+        return None
+    stripped = raw.strip()
+    return stripped or None
+
+
+def _env_strip_default(name: str, default: str) -> str:
+    raw = getenv(name)
+    if raw is None:
+        return default
+    stripped = raw.strip()
+    return stripped or default
+
+
 @dataclass(frozen=True)
 class OidcConfig:
     """Configuration for Telegram OIDC and local app sessions."""
@@ -38,28 +54,34 @@ class OidcConfig:
     @classmethod
     def from_env(cls) -> OidcConfig:
         """Create config from environment variables."""
-        bot_token = getenv("TELEGRAM_BOT_TOKEN")
+        bot_token = _env_strip("TELEGRAM_BOT_TOKEN")
         return cls(
-            client_id=getenv("TELEGRAM_OIDC_CLIENT_ID")
+            client_id=_env_strip("TELEGRAM_OIDC_CLIENT_ID")
             or _client_id_from_bot_token(bot_token),
-            client_secret=getenv("TELEGRAM_OIDC_CLIENT_SECRET"),
-            service_base_url=getenv("SERVICE_BASE_URL", "http://localhost:8000"),
-            app_session_secret=getenv("APP_SESSION_SECRET") or bot_token,
+            client_secret=_env_strip("TELEGRAM_OIDC_CLIENT_SECRET"),
+            service_base_url=_env_strip_default(
+                "SERVICE_BASE_URL",
+                "http://localhost:8000",
+            ),
+            app_session_secret=_env_strip("APP_SESSION_SECRET") or bot_token,
             bot_token=bot_token,
             app_session_ttl_seconds=int(getenv("APP_SESSION_TTL_SECONDS", "3600")),
-            authorization_endpoint=getenv(
+            authorization_endpoint=_env_strip_default(
                 "TELEGRAM_OIDC_AUTHORIZATION_ENDPOINT",
                 "https://oauth.telegram.org/auth",
             ),
-            token_endpoint=getenv(
+            token_endpoint=_env_strip_default(
                 "TELEGRAM_OIDC_TOKEN_ENDPOINT",
                 "https://oauth.telegram.org/token",
             ),
-            jwks_uri=getenv(
+            jwks_uri=_env_strip_default(
                 "TELEGRAM_OIDC_JWKS_URI",
                 "https://oauth.telegram.org/.well-known/jwks.json",
             ),
-            issuer=getenv("TELEGRAM_OIDC_ISSUER", "https://oauth.telegram.org"),
+            issuer=_env_strip_default(
+                "TELEGRAM_OIDC_ISSUER",
+                "https://oauth.telegram.org",
+            ),
         )
 
 

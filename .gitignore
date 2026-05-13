@@ -73,6 +73,9 @@ token.json
 site/
 .site/
 
+# Local application data (sqlite, caches, etc.)
+.data/
+
 # Telethon session databases (may contain auth state)
 *.session
 
@@ -80,3 +83,6 @@ site/
 infra/.terraform/
 infra/*.tfstate
 infra/*.tfstate.backup
+
+# Cursor project rules (local / machine-specific)
+.cursor/rules/

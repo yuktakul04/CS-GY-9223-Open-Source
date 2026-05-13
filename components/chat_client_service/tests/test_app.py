@@ -1090,6 +1090,22 @@ def test_oidc_config_allows_explicit_login_credential_overrides(
     assert config.app_session_secret == "123456:bot-secret"
 
 
+def test_oidc_config_strips_whitespace_from_pasted_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Strip pasted whitespace to avoid invalid service URLs."""
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "\n123456:bot-secret\t")
+    monkeypatch.setenv("SERVICE_BASE_URL", " https://svc.example/app \n")
+    monkeypatch.delenv("TELEGRAM_OIDC_CLIENT_ID", raising=False)
+    monkeypatch.delenv("TELEGRAM_OIDC_CLIENT_SECRET", raising=False)
+    monkeypatch.delenv("APP_SESSION_SECRET", raising=False)
+
+    config = OidcConfig.from_env()
+
+    assert config.bot_token == "123456:bot-secret"
+    assert config.service_base_url == "https://svc.example/app"
+
+
 def test_complete_login_exchanges_code_and_issues_token() -> None:
     """OIDC callback exchanges code, verifies id_token, and signs local token."""
     config = OidcConfig(

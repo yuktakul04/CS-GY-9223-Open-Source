@@ -26,8 +26,17 @@ Telegram Bot API.
 
 ## Local Run
 
+Install workspace dependencies:
+
 ```bash
-uv run uvicorn chat_client_service.app:app --reload
+uv sync --all-packages --extra dev
+```
+
+Start the FastAPI service from the repo root:
+
+```bash
+PYTHONPATH="$PWD/components/chat_client_service/src:$PWD/components/telegram_client_impl/src:$PWD/components/ai_client_api/src:$PWD/components/openai_client_impl/src:$PWD/components/gemini_client_impl/src:$PWD/components/issue_tracker_integration/src" \
+uv run --package chat-client-service python -m uvicorn "chat_client_service.app:app" --reload
 ```
 
 OpenAPI schema is available at `/openapi.json`.
@@ -63,6 +72,16 @@ Minimal working Render setup:
 - `TELEGRAM_BOT_TOKEN`: bot token from [BotFather](https://t.me/BotFather)
 - `SERVICE_BASE_URL`: public service URL, for example `https://<service>.onrender.com`
 
+Minimal local AI-enabled setup:
+
+- `TELEGRAM_BOT_TOKEN`
+- `SERVICE_BASE_URL`, for example `http://127.0.0.1:8000`
+- `TELEGRAM_UPDATE_MODE=polling` for local polling, or `webhook` if you are posting updates to `/telegram/webhook`
+- `CHAT_CLIENT_ASSISTANT_PROVIDER=openai` or `gemini`
+- matching AI key:
+  - `OPENAI_API_KEY`, or
+  - `GEMINI_API_KEY`
+
 For the current migration branch, that is the intended baseline. The Render
 blueprint already supplies defaults for the rest.
 
@@ -91,6 +110,13 @@ Optional variables:
 - `TELEGRAM_OIDC_CLIENT_SECRET`: optional OIDC code-flow secret
 - `TELEGRAM_WEBHOOK_SECRET`: optional webhook hardening when using `/telegram/webhook`
 - `TELEGRAM_BOT_API_BASE_URL`: override only for a custom Bot API server
+
+Issue tracker variables are only required when you want AI-driven issue tracker
+tool calls:
+
+- `TRELLO_API_KEY`
+- `TRELLO_TOKEN`
+- `TRELLO_BOARD_ID` (optional default board)
 
 Do not set optional variables unless you need them. The minimal Render path is
 the least error-prone path.
@@ -305,6 +331,16 @@ The fix is to open the bot shown by `bot_start_url`, press Start, then retry.
 This is the matching `curl` flow for macOS Terminal, iTerm, or any POSIX shell
 such as `zsh` or `bash`.
 
+Quick session setup commands:
+
+1. `POST /auth/sessions`
+2. Open the returned `login_url`
+3. Export the returned `session_id`
+4. Verify with `GET /auth/me`
+5. Send with `POST /chat/messages`
+6. Receive with `GET /chat/messages?channel_id=me`
+7. List channels with `GET /chat/channels`
+
 Create a pending auth session:
 
 ```bash
@@ -391,6 +427,18 @@ Delete one message by opaque id:
 curl -sS -X DELETE -H "$AUTH_HEADER" "$BASE/chat/messages/$SENT_ID"
 ```
 
+Equivalent compact local-client flow:
+
+```bash
+curl -X POST "$BASE/auth/sessions" > session.json
+open "$(python3 -c "import json; print(json.load(open('session.json'))['login_url'])")"
+export SESSION_ID="$(python3 -c "import json; print(json.load(open('session.json'))['session_id'])")"
+curl -H "X-Session-ID: $SESSION_ID" "$BASE/auth/me"
+curl -X POST "$BASE/chat/messages" -H "X-Session-ID: $SESSION_ID" -H "Content-Type: application/json" -d '{"channel_id":"me","text":"hello from terminal"}'
+curl -H "X-Session-ID: $SESSION_ID" "$BASE/chat/messages?channel_id=me"
+curl -H "X-Session-ID: $SESSION_ID" "$BASE/chat/channels"
+```
+
 ## Chat Semantics
 
 This implementation is bot-scoped:
@@ -420,3 +468,75 @@ Telegram only delivers bot updates one way at a time:
 For Render, the recommended path is polling plus a persistent disk. Webhook mode
 is still available, and `TELEGRAM_WEBHOOK_SECRET` is optional rather than
 required.
+
+## AI Assistant Testing
+
+The AI assistant path is not triggered by `POST /chat/messages`. That endpoint
+sends a bot-authored message through the normal chat API.
+
+The AI assistant runs on inbound Telegram updates:
+
+- real Telegram messages delivered through polling or webhook mode
+- or simulated updates posted to `POST /telegram/webhook`
+
+Plain AI replies require only:
+
+- `CHAT_CLIENT_ASSISTANT_PROVIDER`
+- `OPENAI_API_KEY` or `GEMINI_API_KEY`
+
+Issue tracker tool calls additionally require:
+
+- `TRELLO_API_KEY`
+- `TRELLO_TOKEN`
+
+If Trello is not configured and the model invokes an issue tracker tool, the
+assistant replies with:
+
+```text
+Issue tracker integration is not configured.
+```
+
+### Webhook Smoke Test
+
+Use a real numeric Telegram chat id for `TG_CHAT_ID`. Do not use the bot token.
+
+```bash
+BASE_URL="http://127.0.0.1:8000"
+TG_CHAT_ID="123456789"
+
+curl -i -X POST "$BASE_URL/telegram/webhook" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"update_id\": 999004,
+    \"message\": {
+      \"message_id\": 45,
+      \"date\": 1715200000,
+      \"text\": \"Reply exactly with HELLO_TEST_123\",
+      \"chat\": {
+        \"id\": $TG_CHAT_ID,
+        \"type\": \"private\",
+        \"first_name\": \"Test\"
+      },
+      \"from\": {
+        \"id\": $TG_CHAT_ID,
+        \"is_bot\": false,
+        \"first_name\": \"Test\",
+        \"username\": \"testuser\"
+      }
+    }
+  }"
+```
+
+Expected behavior:
+
+- `POST /telegram/webhook` returns `204 No Content`
+- the assistant calls the configured AI provider
+- the bot replies into the same Telegram chat
+
+Useful prompt texts for manual testing:
+
+- `Reply exactly with HELLO_TEST_123`
+- `Reply with exactly one word: success`
+- `What channels do you know about?`
+- `List my recent messages`
+- `List boards`

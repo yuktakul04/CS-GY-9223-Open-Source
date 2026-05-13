@@ -3,6 +3,7 @@
 import logging
 import os
 import time
+from collections.abc import Callable
 from typing import Any
 
 import httpx
@@ -198,8 +199,11 @@ class TelegramClient(ChatClient):
 
     @property
     def _api_base_url(self) -> str:
-        token = self._config.bot_token or ""
-        return f"{self._config.bot_api_base_url.rstrip('/')}/bot{token}"
+        token = (self._config.bot_token or "").strip()
+        base = (self._config.bot_api_base_url or "").strip().rstrip("/")
+        if not base:
+            base = "https://api.telegram.org"
+        return f"{base}/bot{token}"
 
     def _request(
         self,
@@ -252,7 +256,12 @@ class TelegramClient(ChatClient):
             )
         return payload
 
-    def _sync_updates_from_polling(self, *, force: bool = False) -> None:
+    def _sync_updates_from_polling(
+        self,
+        *,
+        force: bool = False,
+        on_update: Callable[[dict[str, object]], None] | None = None,
+    ) -> None:
         """Pull pending updates when this bot is not configured for webhooks."""
         if self._polling_checked:
             return
@@ -283,13 +292,18 @@ class TelegramClient(ChatClient):
             LOGGER.warning("Telegram getUpdates failed: %s", exc)
             return
 
-        self._record_polled_updates(updates_payload.get("result"))
+        self._record_polled_updates(updates_payload.get("result"), on_update=on_update)
 
-    def sync_updates(self, *, force: bool = False) -> None:
+    def sync_updates(
+        self,
+        *,
+        force: bool = False,
+        on_update: Callable[[dict[str, object]], None] | None = None,
+    ) -> None:
         """Synchronize pending Bot API updates when polling is available."""
         if force:
             self._polling_checked = False
-        self._sync_updates_from_polling(force=force)
+        self._sync_updates_from_polling(force=force, on_update=on_update)
 
     def _webhook_is_configured(self) -> bool:
         """Return whether Telegram reports an active webhook URL."""
@@ -313,7 +327,12 @@ class TelegramClient(ChatClient):
             payload["offset"] = offset
         return payload
 
-    def _record_polled_updates(self, updates: object) -> None:
+    def _record_polled_updates(
+        self,
+        updates: object,
+        *,
+        on_update: Callable[[dict[str, object]], None] | None = None,
+    ) -> None:
         """Record polled updates and advance the persisted offset."""
         if not isinstance(updates, list):
             msg = "Telegram Bot API returned non-list updates result"
@@ -325,6 +344,8 @@ class TelegramClient(ChatClient):
             if not isinstance(update, dict):
                 continue
             record_update(update)
+            if on_update is not None:
+                on_update(update)
             update_id = update.get("update_id")
             if isinstance(update_id, int):
                 update_ids.append(update_id)

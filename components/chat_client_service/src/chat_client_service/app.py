@@ -10,6 +10,8 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from chat_client_api import ChatClient, get_client
+from chat_client_service.assistant import build_default_orchestrator
 from chat_client_service.config import load_environment
 from chat_client_service.middleware.telemetry import TelemetryMiddleware
 from chat_client_service.models import HealthResponse
@@ -33,14 +35,31 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """Start optional background services for the FastAPI app."""
     poller: TelegramUpdatePoller | None = None
+    poller_chat_client: ChatClient | None = None
     if should_start_update_poller():
-        poller = TelegramUpdatePoller(interval_seconds=poll_interval_seconds())
+        poller_chat_client = get_client()
+        assistant = build_default_orchestrator(poller_chat_client)
+        on_update = None
+        if assistant is not None:
+
+            def _on_update(update: dict[str, object]) -> None:
+                assistant.handle_update(update)
+
+            on_update = _on_update
+        poller = TelegramUpdatePoller(
+            interval_seconds=poll_interval_seconds(),
+            on_update=on_update,
+        )
         poller.start()
     try:
         yield
     finally:
         if poller is not None:
             poller.stop()
+        if poller_chat_client is not None:
+            close = getattr(poller_chat_client, "close", None)
+            if callable(close):
+                close()
 
 
 _STATIC_DIR = Path(__file__).parent / "static"

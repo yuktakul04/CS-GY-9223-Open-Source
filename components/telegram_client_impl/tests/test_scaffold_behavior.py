@@ -290,8 +290,11 @@ def test_get_messages_cursor_returns_newer_messages() -> None:
     assert [message.text for message in messages] == ["seen 9", "seen 10"]
 
 
-def test_client_polls_updates_when_webhook_is_not_configured() -> None:
+def test_client_polls_updates_when_webhook_is_not_configured(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Reads can ingest pending Bot API updates when no webhook is active."""
+    monkeypatch.delenv("TELEGRAM_UPDATE_MODE", raising=False)
     requests: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -396,8 +399,12 @@ def test_forced_polling_still_fetches_updates_when_poller_is_enabled(
     assert json.loads(get_updates.content)["timeout"] == 3
 
 
-def test_polling_errors_are_logged(caplog: pytest.LogCaptureFixture) -> None:
+def test_polling_errors_are_logged(
+    caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Polling failures are visible instead of being silently dropped."""
+    monkeypatch.delenv("TELEGRAM_UPDATE_MODE", raising=False)
 
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path.endswith("/getWebhookInfo"):

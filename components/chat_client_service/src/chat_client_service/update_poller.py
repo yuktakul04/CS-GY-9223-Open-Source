@@ -5,10 +5,13 @@ from __future__ import annotations
 import logging
 import os
 import threading
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from telegram_client_impl.client import TelegramClient, get_client_impl
 from telegram_client_impl.errors import TelegramAuthError
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 LOGGER = logging.getLogger(__name__)
 DEFAULT_POLL_INTERVAL_SECONDS = 3.0
@@ -17,9 +20,15 @@ DEFAULT_POLL_INTERVAL_SECONDS = 3.0
 class TelegramUpdatePoller:
     """Run Bot API update polling while the web service process is alive."""
 
-    def __init__(self, *, interval_seconds: float) -> None:
+    def __init__(
+        self,
+        *,
+        interval_seconds: float,
+        on_update: Callable[[dict[str, object]], None] | None = None,
+    ) -> None:
         """Create a poller with a fixed interval between update checks."""
         self._interval_seconds = interval_seconds
+        self._on_update = on_update
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
 
@@ -50,7 +59,7 @@ class TelegramUpdatePoller:
         client: TelegramClient | None = None
         try:
             client = cast("TelegramClient", get_client_impl(interactive=False))
-            client.sync_updates(force=True)
+            client.sync_updates(force=True, on_update=self._on_update)
         except TelegramAuthError:
             LOGGER.warning("Telegram polling disabled because bot token is missing")
             self._stop_event.set()

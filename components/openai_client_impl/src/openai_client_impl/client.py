@@ -75,6 +75,11 @@ class OpenAIClient(AIClient):
         return cast("str", text)
 
 
+def get_client_impl() -> AIClient:
+    """Construct the default OpenAI-backed ``AIClient`` implementation."""
+    return OpenAIClient()
+
+
 def _build_user_content(
     *,
     prompt: str,
