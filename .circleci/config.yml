@@ -83,5 +83,5 @@ workflows:
           filters:
             branches:
               only:
-                - gemini-client
+                - hw3
                 - main
