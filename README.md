@@ -15,6 +15,19 @@ AI client components, and issue tracker integration.
 - Pranav Raj N K — pn2330
 - Mohamed Yaseen Mohamed Shuaib — mm14451
 
+## Deployment
+
+The service is deployed on Render via [`render.yaml`](render.yaml) and observed
+through an AWS CloudWatch dashboard provisioned by Terraform.
+
+- **Live service:** `YOUR_RENDER_URL` (e.g. `https://chat-client-service-XXXX.onrender.com`)
+- **Health check:** `YOUR_RENDER_URL/health`
+- **API docs (Swagger UI):** `YOUR_RENDER_URL/docs`
+- **Telemetry dashboard:** [OSPSD-HW3-ChatService on CloudWatch](https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=OSPSD-HW3-ChatService)
+
+CircleCI pings the Render deploy hook on green builds of `gemini-client` and
+`main`; see [`.circleci/config.yml`](.circleci/config.yml).
+
 ## Prerequisites
 
 - Python 3.12 or higher
@@ -113,6 +126,28 @@ Optional variables:
 Do not set optional variables unless you actually need them. The more you
 change away from the minimal working setup, the more ways there are to drift
 from the proven deployment path.
+
+## Infrastructure Setup
+
+The AWS-side telemetry resources are managed by Terraform under [`infra/`](infra/):
+
+```bash
+cd infra
+terraform init
+terraform apply
+```
+
+This provisions:
+
+- the `chat-client-service-logs` CloudWatch log group (7-day retention),
+- the `ChatServiceTelemetryPolicy` IAM policy granting `logs:Put*` and
+  `cloudwatch:PutMetricData`,
+- the `OSPSD-HW3-ChatService` CloudWatch dashboard (latency + success/failure
+  widgets).
+
+Attach the printed IAM policy ARN to the IAM user whose credentials the Render
+service uses, then set `CHAT_CLIENT_CLOUDWATCH_ENABLED=true` in Render so the
+service emits EMF metrics to the log group.
 
 ## BotFather Setup
 
@@ -291,7 +326,8 @@ Expected behavior:
 │   ├── chat_client_adapter/               # Adapter implementing shared ChatClient
 │   ├── issue_tracker_integration/         # Team integration component
 │   ├── ai_client_api/                     # Shared AI interface
-│   └── openai_client_impl/                # OpenAI implementation
+│   ├── openai_client_impl/                # OpenAI implementation
+│   └── gemini_client_impl/                # Gemini implementation
 ├── src/nyu_ospsd_chat/                    # Root Hatch wheel meta-package
 ├── tests/                                 # Integration / e2e tests
 ├── docs/                                  # MkDocs documentation
