@@ -34,6 +34,8 @@ from chat_client_service.tools import (
 from issue_tracker_integration.client import get_bridge
 from issue_tracker_integration.trello_adapter import TrelloClientAdapter
 
+LOGGER = logging.getLogger(__name__)
+
 if TYPE_CHECKING:
     from ai_client_api import AIClient, ToolCallResponse
     from chat_client_api import ChatClient

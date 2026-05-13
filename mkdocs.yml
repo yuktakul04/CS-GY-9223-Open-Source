@@ -32,6 +32,10 @@ nav:
   - Getting Started: getting-started.md
   - API Reference: api-reference.md
   - Telegram Implementation: telegram-implementation.md
+  - AI Integration: ai-integration.md
+  - Cross-Vertical Integration: cross-vertical.md
+  - Deployment: deployment.md
+  - Observability: observability.md
 
 markdown_extensions:
   - pymdownx.highlight:
