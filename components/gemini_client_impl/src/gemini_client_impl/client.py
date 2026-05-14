@@ -8,8 +8,14 @@ from typing import Any
 from google import genai
 
 from ai_client_api import AIClient, ToolCallResponse
+from ai_client_api.resilience import (
+    CircuitBreaker,
+    CircuitBreakerOpenError,
+    call_with_resilience,
+)
 from gemini_client_impl.config import GeminiClientConfig
 from gemini_client_impl.errors import GeminiClientError
+from gemini_client_impl.resilience import is_transient_error
 
 
 class GeminiClient(AIClient):
@@ -20,9 +26,11 @@ class GeminiClient(AIClient):
         *,
         config: GeminiClientConfig | None = None,
         client: genai.Client | None = None,
+        circuit_breaker: CircuitBreaker | None = None,
     ) -> None:
         """Create a Gemini-backed client with env/default configuration."""
         self._config = config or GeminiClientConfig.from_env()
+        self._circuit_breaker = circuit_breaker or CircuitBreaker()
         if client is not None:
             self._client = client
         elif not self._config.api_key:
@@ -46,7 +54,14 @@ class GeminiClient(AIClient):
         if tools:
             payload["config"] = {"tools": _to_gemini_tools(tools)}
         try:
-            response = self._client.models.generate_content(**payload)
+            response = call_with_resilience(
+                lambda: self._client.models.generate_content(**payload),
+                is_transient=is_transient_error,
+                circuit_breaker=self._circuit_breaker,
+            )
+        except CircuitBreakerOpenError as exc:
+            msg = "Gemini circuit breaker is open"
+            raise GeminiClientError(msg) from exc
         except Exception as exc:
             msg = f"Gemini request failed: {exc}"
             raise GeminiClientError(msg) from exc
