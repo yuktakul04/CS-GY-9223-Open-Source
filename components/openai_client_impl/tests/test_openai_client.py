@@ -5,9 +5,11 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import MagicMock
 
+import httpx
 import pytest
-from openai import OpenAI
+from openai import APIStatusError, OpenAI, RateLimitError
 
+from ai_client_api.resilience import CircuitBreaker
 from openai_client_impl import OpenAIClient
 from openai_client_impl.config import OpenAIClientConfig
 from openai_client_impl.errors import OpenAIClientError
@@ -22,6 +24,25 @@ def _mock_completion(content: str | None) -> MagicMock:
     choice.message = message
     response.choices = [choice]
     return response
+
+
+def _openai_request() -> httpx.Request:
+    return httpx.Request("POST", "https://api.openai.com/v1/chat/completions")
+
+
+def _rate_limit_error() -> RateLimitError:
+    response = httpx.Response(429, request=_openai_request())
+    return RateLimitError("rate limited", response=response, body=None)
+
+
+def _server_error() -> APIStatusError:
+    response = httpx.Response(503, request=_openai_request())
+    return APIStatusError("server error", response=response, body=None)
+
+
+def _bad_request_error() -> APIStatusError:
+    response = httpx.Response(400, request=_openai_request())
+    return APIStatusError("bad request", response=response, body=None)
 
 
 def test_send_message_delegates_to_openai_sdk() -> None:
@@ -146,3 +167,82 @@ def test_tool_call_invalid_json_raises() -> None:
     )
     with pytest.raises(OpenAIClientError, match="invalid JSON"):
         client.send_message("weather?")
+
+
+def test_send_message_retries_transient_error_then_succeeds(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Transient OpenAI failures are retried before succeeding."""
+    sleeps: list[float] = []
+    monkeypatch.setattr("ai_client_api.resilience.time.sleep", sleeps.append)
+    monkeypatch.setattr("ai_client_api.resilience.random.uniform", lambda _a, _b: 0.0)
+
+    mock_sdk = MagicMock(spec=OpenAI)
+    mock_sdk.chat.completions.create.side_effect = [
+        _rate_limit_error(),
+        _server_error(),
+        _mock_completion("ok"),
+    ]
+    client = OpenAIClient(
+        config=OpenAIClientConfig(api_key="sk-test", model="gpt-test"),
+        client=mock_sdk,
+        circuit_breaker=CircuitBreaker(failure_threshold=5),
+    )
+
+    assert client.send_message("ping") == "ok"
+    assert mock_sdk.chat.completions.create.call_count == 3
+    assert sleeps == [0.5, 1.0]
+
+
+def test_send_message_stops_after_max_three_retries() -> None:
+    """OpenAI requests stop after one initial attempt and three retries."""
+    mock_sdk = MagicMock(spec=OpenAI)
+    mock_sdk.chat.completions.create.side_effect = _rate_limit_error()
+    client = OpenAIClient(
+        config=OpenAIClientConfig(api_key="sk-test", model="gpt-test"),
+        client=mock_sdk,
+        circuit_breaker=CircuitBreaker(failure_threshold=5),
+    )
+
+    with pytest.raises(OpenAIClientError, match="rate limited"):
+        client.send_message("ping")
+
+    assert mock_sdk.chat.completions.create.call_count == 4
+
+
+def test_send_message_does_not_retry_non_transient_error() -> None:
+    """Non-transient OpenAI failures are not retried."""
+    mock_sdk = MagicMock(spec=OpenAI)
+    mock_sdk.chat.completions.create.side_effect = _bad_request_error()
+    client = OpenAIClient(
+        config=OpenAIClientConfig(api_key="sk-test", model="gpt-test"),
+        client=mock_sdk,
+        circuit_breaker=CircuitBreaker(failure_threshold=5),
+    )
+
+    with pytest.raises(OpenAIClientError, match="bad request"):
+        client.send_message("ping")
+
+    assert mock_sdk.chat.completions.create.call_count == 1
+
+
+def test_send_message_circuit_breaker_blocks_after_consecutive_failures() -> None:
+    """An open circuit breaker rejects further OpenAI calls without retrying."""
+    mock_sdk = MagicMock(spec=OpenAI)
+    mock_sdk.chat.completions.create.side_effect = _rate_limit_error()
+    breaker = CircuitBreaker(failure_threshold=2)
+    client = OpenAIClient(
+        config=OpenAIClientConfig(api_key="sk-test", model="gpt-test"),
+        client=mock_sdk,
+        circuit_breaker=breaker,
+    )
+
+    for _ in range(2):
+        with pytest.raises(OpenAIClientError, match="rate limited"):
+            client.send_message("ping")
+
+    mock_sdk.chat.completions.create.reset_mock()
+    with pytest.raises(OpenAIClientError, match="circuit breaker is open"):
+        client.send_message("ping")
+
+    mock_sdk.chat.completions.create.assert_not_called()

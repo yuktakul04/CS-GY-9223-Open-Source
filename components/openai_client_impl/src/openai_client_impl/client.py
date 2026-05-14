@@ -8,8 +8,14 @@ from typing import Any, cast
 from openai import OpenAI
 
 from ai_client_api import AIClient, ToolCallResponse
+from ai_client_api.resilience import (
+    CircuitBreaker,
+    CircuitBreakerOpenError,
+    call_with_resilience,
+)
 from openai_client_impl.config import OpenAIClientConfig
 from openai_client_impl.errors import OpenAIClientError
+from openai_client_impl.resilience import is_transient_error
 
 
 class OpenAIClient(AIClient):
@@ -20,9 +26,11 @@ class OpenAIClient(AIClient):
         *,
         config: OpenAIClientConfig | None = None,
         client: OpenAI | None = None,
+        circuit_breaker: CircuitBreaker | None = None,
     ) -> None:
         """Create an OpenAI-backed client with env/default configuration."""
         self._config = config or OpenAIClientConfig.from_env()
+        self._circuit_breaker = circuit_breaker or CircuitBreaker()
         if client is not None:
             self._client = client
         elif not self._config.api_key:
@@ -46,7 +54,14 @@ class OpenAIClient(AIClient):
         if tools:
             payload["tools"] = tools
         try:
-            response = self._client.chat.completions.create(**payload)
+            response = call_with_resilience(
+                lambda: self._client.chat.completions.create(**payload),
+                is_transient=is_transient_error,
+                circuit_breaker=self._circuit_breaker,
+            )
+        except CircuitBreakerOpenError as exc:
+            msg = "OpenAI circuit breaker is open"
+            raise OpenAIClientError(msg) from exc
         except Exception as exc:
             msg = f"OpenAI request failed: {exc}"
             raise OpenAIClientError(msg) from exc

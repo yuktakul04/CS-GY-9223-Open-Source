@@ -6,7 +6,9 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
+from google.genai.errors import ClientError, ServerError
 
+from ai_client_api.resilience import CircuitBreaker
 from gemini_client_impl import GeminiClient
 from gemini_client_impl.config import GeminiClientConfig
 from gemini_client_impl.errors import GeminiClientError
@@ -17,6 +19,18 @@ def _mock_response(content: str | None) -> MagicMock:
     response.text = content
     response.function_calls = None
     return response
+
+
+def _rate_limit_error() -> ClientError:
+    return ClientError(429, {"error": "rate limited"})
+
+
+def _server_error() -> ServerError:
+    return ServerError(503, {"error": "server error"})
+
+
+def _bad_request_error() -> ClientError:
+    return ClientError(400, {"error": "bad request"})
 
 
 def test_send_message_delegates_to_gemini_sdk() -> None:
@@ -151,3 +165,82 @@ def test_tool_call_non_object_args_raises() -> None:
     )
     with pytest.raises(GeminiClientError, match="arguments"):
         client.send_message("weather?")
+
+
+def test_send_message_retries_transient_error_then_succeeds(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Transient Gemini failures are retried before succeeding."""
+    sleeps: list[float] = []
+    monkeypatch.setattr("ai_client_api.resilience.time.sleep", sleeps.append)
+    monkeypatch.setattr("ai_client_api.resilience.random.uniform", lambda _a, _b: 0.0)
+
+    mock_sdk = MagicMock()
+    mock_sdk.models.generate_content.side_effect = [
+        _rate_limit_error(),
+        _server_error(),
+        _mock_response("ok"),
+    ]
+    client = GeminiClient(
+        config=GeminiClientConfig(api_key="gemini-test", model="gemini-test"),
+        client=mock_sdk,
+        circuit_breaker=CircuitBreaker(failure_threshold=5),
+    )
+
+    assert client.send_message("ping") == "ok"
+    assert mock_sdk.models.generate_content.call_count == 3
+    assert sleeps == [0.5, 1.0]
+
+
+def test_send_message_stops_after_max_three_retries() -> None:
+    """Gemini requests stop after one initial attempt and three retries."""
+    mock_sdk = MagicMock()
+    mock_sdk.models.generate_content.side_effect = _rate_limit_error()
+    client = GeminiClient(
+        config=GeminiClientConfig(api_key="gemini-test", model="gemini-test"),
+        client=mock_sdk,
+        circuit_breaker=CircuitBreaker(failure_threshold=5),
+    )
+
+    with pytest.raises(GeminiClientError, match="rate limited"):
+        client.send_message("ping")
+
+    assert mock_sdk.models.generate_content.call_count == 4
+
+
+def test_send_message_does_not_retry_non_transient_error() -> None:
+    """Non-transient Gemini failures are not retried."""
+    mock_sdk = MagicMock()
+    mock_sdk.models.generate_content.side_effect = _bad_request_error()
+    client = GeminiClient(
+        config=GeminiClientConfig(api_key="gemini-test", model="gemini-test"),
+        client=mock_sdk,
+        circuit_breaker=CircuitBreaker(failure_threshold=5),
+    )
+
+    with pytest.raises(GeminiClientError, match="bad request"):
+        client.send_message("ping")
+
+    assert mock_sdk.models.generate_content.call_count == 1
+
+
+def test_send_message_circuit_breaker_blocks_after_consecutive_failures() -> None:
+    """An open circuit breaker rejects further Gemini calls without retrying."""
+    mock_sdk = MagicMock()
+    mock_sdk.models.generate_content.side_effect = _rate_limit_error()
+    breaker = CircuitBreaker(failure_threshold=2)
+    client = GeminiClient(
+        config=GeminiClientConfig(api_key="gemini-test", model="gemini-test"),
+        client=mock_sdk,
+        circuit_breaker=breaker,
+    )
+
+    for _ in range(2):
+        with pytest.raises(GeminiClientError, match="rate limited"):
+            client.send_message("ping")
+
+    mock_sdk.models.generate_content.reset_mock()
+    with pytest.raises(GeminiClientError, match="circuit breaker is open"):
+        client.send_message("ping")
+
+    mock_sdk.models.generate_content.assert_not_called()
