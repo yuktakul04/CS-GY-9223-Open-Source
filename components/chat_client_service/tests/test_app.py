@@ -1236,6 +1236,59 @@ def test_send_message_delegates_to_client(mock_chat_client: Mock) -> None:
     )
 
 
+def test_send_message_uses_configured_slack_provider(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """POST /chat/messages can swap from Telegram to the Slack ChatClient."""
+    from slack_client_impl import client as slack_client_module
+
+    class FakeSlackWebClient:
+        def __init__(self, *, token: str) -> None:
+            self.token = token
+            self.sent: dict[str, str] | None = None
+
+        def chat_postMessage(  # noqa: N802
+            self,
+            *,
+            channel: str,
+            text: str,
+        ) -> dict[str, object]:
+            self.sent = {"channel": channel, "text": text}
+            return {"ok": True, "channel": channel, "ts": "1715200000.000100"}
+
+    fake_slack = FakeSlackWebClient(token="xoxb-test")
+    monkeypatch.setenv("CHAT_CLIENT_PROVIDER", "slack")
+    monkeypatch.setenv("SLACK_BOT_TOKEN", "xoxb-test")
+    monkeypatch.setenv("CHAT_CLIENT_ALLOWED_CHANNEL_IDS", "C1234567890")
+
+    def build_fake_web_client(*, token: str) -> FakeSlackWebClient:
+        assert token == "xoxb-test"
+        return fake_slack
+
+    monkeypatch.setattr(
+        slack_client_module,
+        "WebClient",
+        build_fake_web_client,
+    )
+    app.dependency_overrides[get_current_token] = lambda: "test-token"
+    app.dependency_overrides[get_current_claims] = _allow_auth
+    try:
+        response = client.post(
+            "/chat/messages",
+            json={"channel_id": "C1234567890", "text": "hello from Slack provider"},
+        )
+    finally:
+        app.dependency_overrides.pop(get_current_token, None)
+        app.dependency_overrides.pop(get_current_claims, None)
+
+    assert response.status_code == 200
+    assert response.json()["id"] == "C1234567890:1715200000.000100"
+    assert fake_slack.sent == {
+        "channel": "C1234567890",
+        "text": "hello from Slack provider",
+    }
+
+
 def test_get_messages_delegates_to_client(mock_chat_client: Mock) -> None:
     """GET /chat/messages delegates to the injected client."""
     mock_chat_client.get_messages.return_value = [
@@ -1291,6 +1344,25 @@ def test_me_channel_requires_telegram_identity(mock_chat_client: Mock) -> None:
     assert response.status_code == 401
     assert response.json()["detail"] == (
         "Authenticated session has no Telegram identity."
+    )
+    mock_chat_client.send_message.assert_not_called()
+
+
+def test_me_channel_alias_is_telegram_only(
+    mock_chat_client: Mock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The Telegram 'me' shortcut is not reused for Slack provider swaps."""
+    monkeypatch.setenv("CHAT_CLIENT_PROVIDER", "slack")
+
+    response = client.post(
+        "/chat/messages",
+        json={"channel_id": "me", "text": "hello"},
+    )
+
+    assert response.status_code == 400
+    assert (
+        response.json()["detail"] == "'me' is only supported by the Telegram provider."
     )
     mock_chat_client.send_message.assert_not_called()
 

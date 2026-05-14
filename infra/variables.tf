@@ -63,6 +63,12 @@ variable "chat_client_assistant_provider" {
   default     = "gemini"
 }
 
+variable "chat_client_provider" {
+  description = "Configured chat provider for the shared ChatClient API."
+  type        = string
+  default     = "telegram"
+}
+
 variable "chat_client_store_path" {
   description = "Writable path for the local SQLite store on Render."
   type        = string
@@ -117,6 +123,22 @@ variable "gemini_api_key" {
 
 variable "openai_api_key" {
   description = "Optional OpenAI API key."
+  type        = string
+  sensitive   = true
+  default     = null
+  nullable    = true
+}
+
+variable "slack_bot_token" {
+  description = "Optional Slack bot token for the Slack ChatClient provider."
+  type        = string
+  sensitive   = true
+  default     = null
+  nullable    = true
+}
+
+variable "chat_client_allowed_channel_ids" {
+  description = "Optional comma-separated allowlist for provider-neutral /chat channel access."
   type        = string
   sensitive   = true
   default     = null

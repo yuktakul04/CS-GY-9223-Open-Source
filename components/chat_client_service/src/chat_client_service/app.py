@@ -15,6 +15,7 @@ from chat_client_service.assistant import build_default_orchestrator
 from chat_client_service.config import load_environment
 from chat_client_service.middleware.telemetry import TelemetryMiddleware
 from chat_client_service.models import HealthResponse
+from chat_client_service.provider import is_telegram_provider, load_chat_provider
 from chat_client_service.routers.auth import router as auth_router
 from chat_client_service.routers.chat import router as chat_router
 from chat_client_service.routers.telegram import router as telegram_router
@@ -36,7 +37,8 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """Start optional background services for the FastAPI app."""
     poller: TelegramUpdatePoller | None = None
     poller_chat_client: ChatClient | None = None
-    if should_start_update_poller():
+    provider = load_chat_provider()
+    if provider == "telegram" and should_start_update_poller():
         poller_chat_client = get_client()
         assistant = build_default_orchestrator(poller_chat_client)
         on_update = None
@@ -70,7 +72,7 @@ _SWAGGER_UI_FAVICON = "https://fastapi.tiangolo.com/img/favicon.png"
 
 app = FastAPI(
     title="Chat Client Service",
-    description="Telegram OIDC login with bot-scoped chat operations.",
+    description="Provider-backed chat operations behind the shared ChatClient API.",
     version="0.1.0",
     lifespan=lifespan,
     docs_url=None,
@@ -148,6 +150,11 @@ def health() -> HealthResponse:
 @app.get("/", response_model=None, include_in_schema=False)
 def root() -> HTMLResponse:
     """Handle Telegram auth fragments that browsers do not send to the server."""
+    if not is_telegram_provider():
+        return HTMLResponse(
+            "<!doctype html><html><body><main>Chat Client Service</main></body></html>"
+        )
+
     bot_username, bot_start_url = get_bot_login_target()
     return HTMLResponse(
         _root_fragment_handler_html(

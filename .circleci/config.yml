@@ -146,8 +146,9 @@ workflows:
       - deploy:
           requires:
             - e2e-tests
+            - docs
           filters:
             branches:
               only:
-                - hw3
+                - gemini-client
                 - main

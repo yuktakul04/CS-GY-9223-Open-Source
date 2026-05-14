@@ -20,9 +20,9 @@ AI client components, and issue tracker integration.
 The service is deployed on Render via [`render.yaml`](render.yaml) and observed
 through an AWS CloudWatch dashboard provisioned by Terraform.
 
-- **Live service:** https://chat-client-service-xer8.onrender.com
-- **Health check:** https://chat-client-service-xer8.onrender.com/health
-- **API docs (Swagger UI):** https://chat-client-service-xer8.onrender.com/docs
+- **Live service:** `https://csgy9223.onrender.com`
+- **Health check:** `https://csgy9223.onrender.com/health`
+- **API docs (Swagger UI):** `https://csgy9223.onrender.com/docs`
 - **Telemetry dashboard:** [OSPSD-HW3-ChatService on CloudWatch](https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=OSPSD-HW3-ChatService)
 
 CircleCI pings the Render deploy hook on green builds of `gemini-client` and
@@ -64,9 +64,12 @@ uv run --package chat-client-service python -m uvicorn "chat_client_service.app:
 
 Core environment variables:
 
+- `CHAT_CLIENT_PROVIDER=telegram` or `slack`
 - `TELEGRAM_BOT_TOKEN`
 - `SERVICE_BASE_URL`
 - `TELEGRAM_UPDATE_MODE=polling` or `webhook`
+- `SLACK_BOT_TOKEN` when `CHAT_CLIENT_PROVIDER=slack`
+- `CHAT_CLIENT_ALLOWED_CHANNEL_IDS` for provider-neutral `/chat` channel access
 
 Optional AI assistant variables:
 
@@ -115,6 +118,9 @@ Optional `.env` values that the wrapper also maps for Terraform:
 - `TRELLO_API_KEY`
 - `TRELLO_TOKEN`
 - `TRELLO_BOARD_ID`
+- `SLACK_BOT_TOKEN`
+- `CHAT_CLIENT_PROVIDER`
+- `CHAT_CLIENT_ALLOWED_CHANNEL_IDS`
 - `CHAT_CLIENT_ASSISTANT_PROVIDER`
 - `CHAT_CLIENT_STORE_PATH`
 - `TELEGRAM_UPDATE_MODE`
@@ -130,6 +136,7 @@ the current Render free-tier deployment, use:
 RENDER_SERVICE_PLAN=free
 RENDER_REPO_BRANCH=gemini-client
 TELEGRAM_UPDATE_MODE=polling
+CHAT_CLIENT_PROVIDER=telegram
 CHAT_CLIENT_ASSISTANT_PROVIDER=gemini
 ```
 
@@ -199,6 +206,7 @@ The Terraform-managed Render service preserves the current deployment defaults:
 - `TELEGRAM_POLL_INTERVAL_SECONDS=3`
 - `APP_SESSION_TTL_SECONDS=3600`
 - `CHAT_CLIENT_STORE_PATH=/tmp/chat_client.sqlite3`
+- `CHAT_CLIENT_PROVIDER=telegram`
 - `CHAT_CLIENT_ASSISTANT_PROVIDER=gemini`
 
 Important storage note:
@@ -293,6 +301,52 @@ simple message id, it must also provide channel context.
 
 If an example uses `OSSHWBOTTEST`, replace it with any group or channel where
 the bot is present.
+
+## Same-Vertical Provider Swap
+
+Team 4 remains Telegram-first: `CHAT_CLIENT_PROVIDER=telegram` is the default.
+For the HW3 same-vertical demo, `CHAT_CLIENT_PROVIDER=slack` loads Team 9's
+`components/slack_client_impl` from
+<https://github.com/HarshithKoriRaj/CS-GY-9223-Open-Source/pull/5>, vendored
+locally as `slack-client-impl`.
+
+The shared endpoints stay the same:
+
+```http
+POST /chat/messages
+GET /chat/channels
+GET /chat/channels/{channel_id}
+GET /chat/messages?channel_id=...
+GET /chat/messages/{message_id}
+DELETE /chat/messages/{message_id}
+```
+
+For Telegram, `channel_id` is a Telegram chat id and `me` is Telegram-only. For
+Slack, `channel_id` is a Slack channel id such as `C1234567890`.
+
+Slack demo Render variables:
+
+```bash
+CHAT_CLIENT_PROVIDER=slack
+SLACK_BOT_TOKEN=xoxb-...
+CHAT_CLIENT_ALLOWED_CHANNEL_IDS=C1234567890
+```
+
+Keep Team 4's existing `TELEGRAM_BOT_TOKEN`, `SERVICE_BASE_URL`, and session
+settings because `/chat/...` still uses Team 4 service auth. Team 9's Slack
+OAuth auth vars, `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, and
+`SLACK_REDIRECT_URI`, are not used in this branch.
+
+```bash
+curl -X POST "$BASE_URL/chat/messages" \
+  -H "Content-Type: application/json" \
+  -H "X-Session-ID: $SESSION_ID" \
+  -d '{"channel_id":"C1234567890","text":"hello from Slack provider"}'
+```
+
+Telegram-specific routes (`/telegram/webhook`, `/auth/login`, `/auth/callback`)
+remain Telegram-only. See [Chat Provider Swap](docs/chat-provider-swap.md) for
+the full endpoint and Render variable matrix.
 
 ## Auth Flow
 

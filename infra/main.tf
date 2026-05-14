@@ -25,6 +25,9 @@ locals {
     CHAT_CLIENT_ASSISTANT_PROVIDER = {
       value = var.chat_client_assistant_provider
     }
+    CHAT_CLIENT_PROVIDER = {
+      value = var.chat_client_provider
+    }
     CHAT_CLIENT_STORE_PATH = {
       value = var.chat_client_store_path
     }
@@ -37,15 +40,17 @@ locals {
   }
 
   render_optional_secret_env_values = {
-    APP_SESSION_SECRET          = var.app_session_secret
-    GEMINI_API_KEY              = var.gemini_api_key
-    OPENAI_API_KEY              = var.openai_api_key
-    TELEGRAM_OIDC_CLIENT_ID     = var.telegram_oidc_client_id
-    TELEGRAM_OIDC_CLIENT_SECRET = var.telegram_oidc_client_secret
-    TELEGRAM_WEBHOOK_SECRET     = var.telegram_webhook_secret
-    TRELLO_API_KEY              = var.trello_api_key
-    TRELLO_BOARD_ID             = var.trello_board_id
-    TRELLO_TOKEN                = var.trello_token
+    APP_SESSION_SECRET              = var.app_session_secret
+    CHAT_CLIENT_ALLOWED_CHANNEL_IDS = var.chat_client_allowed_channel_ids
+    GEMINI_API_KEY                  = var.gemini_api_key
+    OPENAI_API_KEY                  = var.openai_api_key
+    SLACK_BOT_TOKEN                 = var.slack_bot_token
+    TELEGRAM_OIDC_CLIENT_ID         = var.telegram_oidc_client_id
+    TELEGRAM_OIDC_CLIENT_SECRET     = var.telegram_oidc_client_secret
+    TELEGRAM_WEBHOOK_SECRET         = var.telegram_webhook_secret
+    TRELLO_API_KEY                  = var.trello_api_key
+    TRELLO_BOARD_ID                 = var.trello_board_id
+    TRELLO_TOKEN                    = var.trello_token
   }
 
   render_secret_env_vars = merge(

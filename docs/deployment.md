@@ -29,7 +29,10 @@ outside the uv workspace — and runs the FastAPI app under uvicorn.
 | `TELEGRAM_BOT_TOKEN` | Bot API auth | Secret, set in Render UI |
 | `SERVICE_BASE_URL` | Public URL for webhooks/links | Secret |
 | `APP_SESSION_TTL_SECONDS` | OIDC session lifetime | Default `3600` |
+| `CHAT_CLIENT_PROVIDER` | `telegram` or `slack` | Selects ChatClient backend |
 | `CHAT_CLIENT_STORE_PATH` | SQLite path | Default `/tmp/chat_client.sqlite3` (Render ephemeral) |
+| `SLACK_BOT_TOKEN` | Slack bot auth | Required when `CHAT_CLIENT_PROVIDER=slack` |
+| `CHAT_CLIENT_ALLOWED_CHANNEL_IDS` | Provider-neutral channel allowlist | Required for Slack demo channels |
 | `TELEGRAM_UPDATE_MODE` | `polling` or `webhook` | Default `polling` |
 | `TELEGRAM_POLL_INTERVAL_SECONDS` | Long-poll interval | Default `3` |
 | `CHAT_CLIENT_ASSISTANT_PROVIDER` | `openai` or `gemini` | Selects AI backend |
@@ -38,6 +41,32 @@ outside the uv workspace — and runs the FastAPI app under uvicorn.
 | `TRELLO_BOARD_ID` | Default board scope | Optional |
 | `CHAT_CLIENT_CLOUDWATCH_ENABLED` | Enable EMF transport | `true` for cloud, off otherwise |
 | `AWS_REGION` / `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | AWS auth | Required when CloudWatch enabled |
+
+### Slack Provider-Swap Variables
+
+Team 4's production path should stay Telegram-first:
+
+```bash
+CHAT_CLIENT_PROVIDER=telegram
+```
+
+For the same-vertical Slack demo, use a separate Render service or temporarily
+switch the existing service and redeploy/restart:
+
+```bash
+CHAT_CLIENT_PROVIDER=slack
+SLACK_BOT_TOKEN=xoxb-...
+CHAT_CLIENT_ALLOWED_CHANNEL_IDS=C1234567890
+```
+
+Keep Team 4's existing service-auth variables such as `TELEGRAM_BOT_TOKEN`,
+`SERVICE_BASE_URL`, and `APP_SESSION_SECRET`. The generic `/chat/...` endpoints
+still require Team 4 service auth through `X-Session-ID` or `Authorization`.
+
+Do not add `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, or `SLACK_REDIRECT_URI`
+unless you are building a separate Slack OAuth auth integration. Those variables
+belong to Team 9's standalone Slack OAuth service auth, which this branch does
+not import.
 
 ## Terraform IaC
 

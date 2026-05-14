@@ -17,6 +17,7 @@ dependencies = [
     "ospd-issue-tracker-api",
     "openai-client-impl",
     "gemini-client-impl",
+    "slack-client-impl",
 ]
 
 [project.optional-dependencies]
@@ -69,6 +70,7 @@ known-first-party = [
     "ai_client_api",
     "openai_client_impl",
     "gemini_client_impl",
+    "slack_client_impl",
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -95,6 +97,7 @@ testpaths = [
     "components/ai_client_api/tests",
     "components/openai_client_impl/tests",
     "components/gemini_client_impl/tests",
+    "components/slack_client_impl/tests",
 ]
 pythonpath = [
     ".",
@@ -106,6 +109,7 @@ pythonpath = [
     "components/ai_client_api/src",
     "components/openai_client_impl/src",
     "components/gemini_client_impl/src",
+    "components/slack_client_impl/src",
 ]
 markers = [
     "e2e: marks end-to-end tests that may require external credentials",
@@ -119,7 +123,10 @@ disable_error_code = ["import-untyped"]
 
 # Untyped shared ``ChatClient`` base from git is treated as ``Any`` under strict mode.
 [[tool.mypy.overrides]]
-module = "telegram_client_impl.client"
+module = [
+    "telegram_client_impl.client",
+    "slack_client_impl.client",
+]
 disable_error_code = ["misc"]
 
 # Untyped shared ``chat_client_api`` base classes are treated as ``Any`` under strict mode.
@@ -159,6 +166,7 @@ members = [
     "components/ai_client_api",
     "components/openai_client_impl",
     "components/gemini_client_impl",
+    "components/slack_client_impl",
 ]
 
 [tool.uv.sources]
@@ -174,6 +182,7 @@ issue-tracker-integration = { workspace = true }
 ai-client-api = { workspace = true }
 openai-client-impl = { workspace = true }
 gemini-client-impl = { workspace = true }
+slack-client-impl = { workspace = true }
 
 [tool.coverage.run]
 source = ["components"]

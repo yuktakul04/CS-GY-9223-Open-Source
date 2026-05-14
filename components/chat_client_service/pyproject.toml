@@ -16,6 +16,7 @@ dependencies = [
     "openai-client-impl",
     "pydantic>=2.0.0",
     "pyjwt[crypto]>=2.8.0",
+    "slack-client-impl",
     "python-dotenv>=1.1.0",
     "telegram-client-impl",
     "watchtower>=3.3.1",

@@ -10,4 +10,5 @@ issue-tracker-client-impl @ git+https://github.com/somadisingh/ospsd-team7-issue
 -e ./components/gemini_client_impl
 -e ./components/issue_tracker_integration
 -e ./components/telegram_client_impl
+-e ./components/slack_client_impl
 -e ./components/chat_client_service

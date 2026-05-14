@@ -32,6 +32,7 @@ nav:
   - Getting Started: getting-started.md
   - API Reference: api-reference.md
   - Telegram Implementation: telegram-implementation.md
+  - Chat Provider Swap: chat-provider-swap.md
   - AI Integration: ai-integration.md
   - Cross-Vertical Integration: cross-vertical.md
   - Deployment: deployment.md
