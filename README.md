@@ -20,9 +20,9 @@ AI client components, and issue tracker integration.
 The service is deployed on Render via [`render.yaml`](render.yaml) and observed
 through an AWS CloudWatch dashboard provisioned by Terraform.
 
-- **Live service:** `YOUR_RENDER_URL` (e.g. `https://chat-client-service-XXXX.onrender.com`)
-- **Health check:** `YOUR_RENDER_URL/health`
-- **API docs (Swagger UI):** `YOUR_RENDER_URL/docs`
+- **Live service:** https://chat-client-service-xer8.onrender.com
+- **Health check:** https://chat-client-service-xer8.onrender.com/health
+- **API docs (Swagger UI):** https://chat-client-service-xer8.onrender.com/docs
 - **Telemetry dashboard:** [OSPSD-HW3-ChatService on CloudWatch](https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=OSPSD-HW3-ChatService)
 
 CircleCI pings the Render deploy hook on green builds of `gemini-client` and
