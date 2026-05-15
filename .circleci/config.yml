@@ -3,25 +3,36 @@ version: 2.1
 orbs:
   python: circleci/python@2.1.1
 
+x-python-docker: &python-docker
+  docker:
+    - image: cimg/python:3.12
+
+x-checkout: &checkout
+  checkout
+
+x-install-uv: &install-uv
+  run:
+    name: Install uv
+    command: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+x-add-uv-path: &add-uv-path
+  run:
+    name: Add uv to PATH
+    command: echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$BASH_ENV"
+
+x-install-deps: &install-deps
+  run:
+    name: Install dependencies
+    command: uv sync --all-extras
+
 jobs:
-  test:
-    docker:
-      - image: cimg/python:3.10
-    environment:
-      # Set TELEGRAM_E2E_ENABLED=1 to run E2E. Add TELEGRAM_API_ID,
-      # TELEGRAM_API_HASH, TELEGRAM_BOT_TOKEN in CircleCI project settings.
-      TELEGRAM_E2E_ENABLED: "1"
+  lint:
+    <<: *python-docker
     steps:
-      - checkout
-      - run:
-          name: Install uv
-          command: curl -LsSf https://astral.sh/uv/install.sh | sh
-      - run:
-          name: Add uv to PATH
-          command: echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$BASH_ENV"
-      - run:
-          name: Install dependencies
-          command: uv sync --all-extras
+      - *checkout
+      - *install-uv
+      - *add-uv-path
+      - *install-deps
       - run:
           name: Run linting
           command: uv run ruff check .
@@ -31,11 +42,55 @@ jobs:
       - run:
           name: Run type checking
           command: uv run mypy components tests
+
+  unit-tests:
+    <<: *python-docker
+    steps:
+      - *checkout
+      - *install-uv
+      - *add-uv-path
+      - *install-deps
       - run:
           name: Run tests
           command: |
             mkdir -p test-results
-            uv run pytest --junitxml=test-results/pytest.xml --cov=components --cov-report=xml
+            uv run pytest --junitxml=test-results/pytest.xml --cov=components --cov-report=xml --ignore=tests
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: coverage.xml
+
+  integration-tests:
+    <<: *python-docker
+    steps:
+      - *checkout
+      - *install-uv
+      - *add-uv-path
+      - *install-deps
+      - run:
+          name: Run tests
+          command: |
+            mkdir -p test-results
+            uv run pytest --junitxml=test-results/pytest.xml tests/integration
+      - store_test_results:
+          path: test-results
+
+  e2e-tests:
+    <<: *python-docker
+    environment:
+      # Set TELEGRAM_E2E_ENABLED=1 to run E2E. Add TELEGRAM_API_ID,
+      # TELEGRAM_API_HASH, TELEGRAM_BOT_TOKEN in CircleCI project settings.
+      TELEGRAM_E2E_ENABLED: "1"
+    steps:
+      - *checkout
+      - *install-uv
+      - *add-uv-path
+      - *install-deps
+      - run:
+          name: Run tests
+          command: |
+            mkdir -p test-results
+            uv run pytest --junitxml=test-results/pytest.xml --cov=components --cov-report=xml --cov-fail-under=0 tests/e2e
       - store_test_results:
           path: test-results
       - store_artifacts:
@@ -43,7 +98,7 @@ jobs:
 
   docs:
     docker:
-      - image: cimg/python:3.10
+      - image: cimg/python:3.12
     steps:
       - checkout
       - run:
@@ -59,8 +114,38 @@ jobs:
           name: Build documentation
           command: uv run mkdocs build
 
+  deploy:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run:
+          name: Trigger Render deploy hook
+          command: |
+            if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+              echo "RENDER_DEPLOY_HOOK_URL is not set" >&2
+              exit 1
+            fi
+            curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"
+
 workflows:
   main:
     jobs:
-      - test
+      - lint
+      - unit-tests:
+          requires:
+            - lint
+      - integration-tests:
+          requires:
+            - unit-tests
+      - e2e-tests:
+          requires:
+            - integration-tests
       - docs
+      - deploy:
+          requires:
+            - e2e-tests
+          filters:
+            branches:
+              only:
+                - hw3
+                - main

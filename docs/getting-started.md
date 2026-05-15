@@ -15,13 +15,78 @@
 
 2. Install dependencies using uv:
    ```bash
-   uv sync
+   uv sync --all-packages --extra dev
    ```
 
-3. Install all dependencies (dev + docs):
-   ```bash
-   uv sync --all-extras
-   ```
+## Local Service Startup
+
+Start the service from the repo root:
+
+```bash
+PYTHONPATH="$PWD/components/chat_client_service/src:$PWD/components/telegram_client_impl/src:$PWD/components/ai_client_api/src:$PWD/components/openai_client_impl/src:$PWD/components/gemini_client_impl/src:$PWD/components/issue_tracker_integration/src" \
+uv run --package chat-client-service python -m uvicorn "chat_client_service.app:app" --reload
+```
+
+Required environment variables:
+
+- `TELEGRAM_BOT_TOKEN`
+- `SERVICE_BASE_URL`
+- `TELEGRAM_UPDATE_MODE=polling` or `webhook`
+
+Optional AI variables:
+
+- `CHAT_CLIENT_ASSISTANT_PROVIDER=openai` or `gemini`
+- `OPENAI_API_KEY` or `GEMINI_API_KEY`
+
+Optional issue tracker variables:
+
+- `TRELLO_API_KEY`
+- `TRELLO_TOKEN`
+- `TRELLO_BOARD_ID`
+
+## Local Client Session Flow
+
+```bash
+curl -X POST "$BASE_URL/auth/sessions" > session.json
+open "$(python3 -c "import json; print(json.load(open('session.json'))['login_url'])")"
+export SESSION_ID="$(python3 -c "import json; print(json.load(open('session.json'))['session_id'])")"
+curl -H "X-Session-ID: $SESSION_ID" "$BASE_URL/auth/me"
+curl -X POST "$BASE_URL/chat/messages" -H "X-Session-ID: $SESSION_ID" -H "Content-Type: application/json" -d '{"channel_id":"me", "text":"hello"}'
+curl -H "X-Session-ID: $SESSION_ID" "$BASE_URL/chat/messages?channel_id=me"
+curl -H "X-Session-ID: $SESSION_ID" "$BASE_URL/chat/channels"
+```
+
+## AI Assistant Webhook Test
+
+The AI assistant is triggered by inbound Telegram updates, not by
+`POST /chat/messages`.
+
+```bash
+curl -i -X POST "$BASE_URL/telegram/webhook" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "update_id": 999004,
+    "message": {
+      "message_id": 45,
+      "date": 1715200000,
+      "text": "Reply exactly with HELLO_TEST_123",
+      "chat": {
+        "id": 123456789,
+        "type": "private",
+        "first_name": "Test"
+      },
+      "from": {
+        "id": 123456789,
+        "is_bot": false,
+        "first_name": "Test",
+        "username": "testuser"
+      }
+    }
+  }'
+```
+
+Plain AI replies require only the AI env vars. Issue tracker AI tool calls also
+require `TRELLO_API_KEY` and `TRELLO_TOKEN`.
 
 ## Running Tests
 

@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: chat-client-service
+    runtime: python
+    plan: free
+    buildCommand: python -m pip install --upgrade pip && python -m pip install -r requirements-render.txt
+    startCommand: python -m uvicorn chat_client_service.app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: SERVICE_BASE_URL
+        sync: false
+      - key: APP_SESSION_TTL_SECONDS
+        value: 3600
+      - key: CHAT_CLIENT_STORE_PATH
+        value: /tmp/chat_client.sqlite3
+      - key: TELEGRAM_UPDATE_MODE
+        value: polling
+      - key: TELEGRAM_POLL_INTERVAL_SECONDS
+        value: 3

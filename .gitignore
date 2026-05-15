@@ -62,10 +62,27 @@ dmypy.json
 # PyPI configuration file
 .pypirc
 
-# uv
-uv.lock
+# uv (lockfile is committed for reproducible CI and local installs)
 .python-version
 
 # Credentials (never commit)
 credentials.json
 token.json
+
+# MkDocs build output (default: site/)
+site/
+.site/
+
+# Local application data (sqlite, caches, etc.)
+.data/
+
+# Telethon session databases (may contain auth state)
+*.session
+
+# Terraform local state and provider cache
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.backup
+
+# Cursor project rules (local / machine-specific)
+.cursor/rules/
