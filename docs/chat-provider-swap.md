@@ -16,9 +16,10 @@ The Slack provider is optional demo support based on imported Team 9 content:
 - Team: Team 9, Slack provider
 - Source: `components/slack_client_impl` from Team 9's HW3 PR #5
 - PR: <https://github.com/HarshithKoriRaj/CS-GY-9223-Open-Source/pull/5>
-- Local package: `components/slack_client_impl` as `slack-client-impl`
+- Package source: pinned git dependency at commit `91eedf88e6823e1f924cbeb05c6a74aa0a524b34`
+- Tree: <https://github.com/HarshithKoriRaj/CS-GY-9223-Open-Source/tree/91eedf88e6823e1f924cbeb05c6a74aa0a524b34/components/slack_client_impl>
 
-This imported package is loaded only when `CHAT_CLIENT_PROVIDER=slack`.
+This external package is loaded only when `CHAT_CLIENT_PROVIDER=slack`.
 Team 4's own provider remains `telegram_client_impl`.
 
 ## Reusable endpoints

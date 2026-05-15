@@ -54,7 +54,7 @@ def sync_detailed(
 ) -> Response[list[ChannelModel]]:
     """Get Channels
 
-     List available channels via telegram_client_impl.
+     List available channels through the configured ChatClient provider.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -79,7 +79,7 @@ def sync(
 ) -> list[ChannelModel] | None:
     """Get Channels
 
-     List available channels via telegram_client_impl.
+     List available channels through the configured ChatClient provider.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -100,7 +100,7 @@ async def asyncio_detailed(
 ) -> Response[list[ChannelModel]]:
     """Get Channels
 
-     List available channels via telegram_client_impl.
+     List available channels through the configured ChatClient provider.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -123,7 +123,7 @@ async def asyncio(
 ) -> list[ChannelModel] | None:
     """Get Channels
 
-     List available channels via telegram_client_impl.
+     List available channels through the configured ChatClient provider.
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.

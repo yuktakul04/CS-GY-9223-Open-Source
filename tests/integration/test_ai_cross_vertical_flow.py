@@ -12,6 +12,7 @@ methods were called.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from api.board import Board
@@ -264,7 +265,7 @@ class RecordingChatClient(ChatClient):
             channel=channel_id,
             text=text,
             sender="bot",
-            timestamp="2026-05-13T00:00:00Z",
+            timestamp=datetime(2026, 5, 13, tzinfo=UTC),
         )
         self._next += 1
         self.sent.append(message)

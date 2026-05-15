@@ -7,6 +7,7 @@ import json
 import os
 import time
 from collections.abc import Generator
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 from unittest.mock import Mock, patch
@@ -60,7 +61,7 @@ def _message_dto(*, message_id: str = "m-1") -> Message:
         message_id=message_id,
         sender="alice",
         channel="ch-1",
-        timestamp="2026-03-20T00:00:00",
+        timestamp=datetime(2026, 3, 20, tzinfo=UTC),
         text="hello",
     )
 
@@ -798,7 +799,7 @@ def test_auth_session_flow_authenticates_chat_with_session_header() -> None:
         message_id="42:5",
         sender="42",
         channel="42",
-        timestamp="2026-04-21T00:00:00Z",
+        timestamp=datetime(2026, 4, 21, tzinfo=UTC),
         text="hello",
     )
     app.dependency_overrides[get_chat_client] = lambda: service_client
@@ -869,7 +870,7 @@ def test_auth_callback_cookie_authenticates_chat_routes() -> None:
         message_id="42:5",
         sender="42",
         channel="42",
-        timestamp="2026-04-21T00:00:00Z",
+        timestamp=datetime(2026, 4, 21, tzinfo=UTC),
         text="hello",
     )
     app.dependency_overrides[get_chat_client] = lambda: service_client

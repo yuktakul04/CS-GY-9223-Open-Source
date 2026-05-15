@@ -1,6 +1,7 @@
 """Chat operation endpoints delegating through chat_client_api."""
 
 import os
+from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -98,13 +99,17 @@ def get_messages(
         client=client,
     )
     try:
-        request_kwargs: dict[str, str | int] = {
-            "channel_id": resolved_channel_id,
-            "limit": query.requested_limit,
-        }
-        if query.cursor is not None:
-            request_kwargs["cursor"] = query.cursor
-        msgs = client.get_messages(**request_kwargs)
+        if query.cursor is None:
+            msgs = client.get_messages(
+                channel_id=resolved_channel_id,
+                limit=query.requested_limit,
+            )
+        else:
+            msgs = client.get_messages(
+                channel_id=resolved_channel_id,
+                limit=query.requested_limit,
+                cursor=query.cursor,
+            )
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -318,7 +323,7 @@ def _message_model(message: Message) -> MessageModel:
         id=message.message_id,
         sender=message.sender,
         channel_id=message.channel,
-        timestamp=message.timestamp,
+        timestamp=_format_timestamp(message.timestamp),
         text=message.text,
     )
 
@@ -329,6 +334,12 @@ def _channel_model(channel: Channel) -> ChannelModel:
         name=channel.name,
         channel_type=channel.channel_type or "unknown",
     )
+
+
+def _format_timestamp(value: object) -> str:
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return str(value)
 
 
 def _is_missing_bot_start(

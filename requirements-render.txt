@@ -5,10 +5,10 @@ chat-client-api @ git+https://github.com/HarshithKoriRaj/Shared-API.git
 ospd-issue-tracker-api @ git+https://github.com/tatyanacthomas/ospd_issue_tracker.git
 issue-tracker-client-api @ git+https://github.com/somadisingh/ospsd-team7-issue-tracker.git#subdirectory=components/issue_tracker_client_api
 issue-tracker-client-impl @ git+https://github.com/somadisingh/ospsd-team7-issue-tracker.git#subdirectory=components/trello_client_impl
+slack-client-impl @ git+https://github.com/HarshithKoriRaj/CS-GY-9223-Open-Source.git@91eedf88e6823e1f924cbeb05c6a74aa0a524b34#subdirectory=components/slack_client_impl
 -e ./components/ai_client_api
 -e ./components/openai_client_impl
 -e ./components/gemini_client_impl
 -e ./components/issue_tracker_integration
 -e ./components/telegram_client_impl
--e ./components/slack_client_impl
 -e ./components/chat_client_service

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from os import getenv
 
 from chat_client_adapter.models import AdapterChannel, AdapterMessage
@@ -23,7 +24,7 @@ class ServiceBackedChatClient(ChatClient):
             message_id=dto.id,
             sender=dto.sender,
             channel=dto.channel_id,
-            timestamp=dto.timestamp,
+            timestamp=_parse_timestamp(dto.timestamp),
             text=dto.text,
         )
 
@@ -44,7 +45,7 @@ class ServiceBackedChatClient(ChatClient):
                 message_id=dto.id,
                 sender=dto.sender,
                 channel=dto.channel_id,
-                timestamp=dto.timestamp,
+                timestamp=_parse_timestamp(dto.timestamp),
                 text=dto.text,
             )
             for dto in messages
@@ -57,7 +58,7 @@ class ServiceBackedChatClient(ChatClient):
             message_id=dto.id,
             sender=dto.sender,
             channel=dto.channel_id,
-            timestamp=dto.timestamp,
+            timestamp=_parse_timestamp(dto.timestamp),
             text=dto.text,
         )
 
@@ -100,3 +101,16 @@ def get_client_impl(*, interactive: bool = False) -> ChatClient:
     token = getenv("CHAT_CLIENT_SERVICE_TOKEN")
     service_client = ChatServiceApiClient(base_url=base_url, token=token)
     return ServiceBackedChatClient(service_client=service_client)
+
+
+def _parse_timestamp(value: object) -> datetime:
+    text = str(value)
+    if text.endswith("Z"):
+        text = f"{text[:-1]}+00:00"
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return datetime.now(tz=UTC)
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=UTC)
+    return parsed

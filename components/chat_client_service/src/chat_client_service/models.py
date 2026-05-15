@@ -10,7 +10,7 @@ class HealthResponse(BaseModel):
 
 
 class ChannelModel(BaseModel):
-    """HTTP model for a Telegram chat known to the bot."""
+    """HTTP model for a provider-backed chat channel."""
 
     id: str = Field(min_length=1)
     name: str = Field(min_length=1)
@@ -18,7 +18,7 @@ class ChannelModel(BaseModel):
 
 
 class MessageModel(BaseModel):
-    """HTTP model for a Telegram message."""
+    """HTTP model for a provider-backed chat message."""
 
     id: str = Field(min_length=1)
     sender: str

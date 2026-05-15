@@ -23,7 +23,7 @@
 Start the service from the repo root:
 
 ```bash
-PYTHONPATH="$PWD/components/chat_client_service/src:$PWD/components/telegram_client_impl/src:$PWD/components/slack_client_impl/src:$PWD/components/ai_client_api/src:$PWD/components/openai_client_impl/src:$PWD/components/gemini_client_impl/src:$PWD/components/issue_tracker_integration/src" \
+PYTHONPATH="$PWD/components/chat_client_service/src:$PWD/components/telegram_client_impl/src:$PWD/components/ai_client_api/src:$PWD/components/openai_client_impl/src:$PWD/components/gemini_client_impl/src:$PWD/components/issue_tracker_integration/src" \
 uv run --package chat-client-service python -m uvicorn "chat_client_service.app:app" --reload
 ```
 
@@ -79,7 +79,8 @@ curl -X POST "$BASE_URL/chat/messages" \
 
 Team 9's standalone Slack OAuth auth uses `SLACK_CLIENT_ID`,
 `SLACK_CLIENT_SECRET`, and `SLACK_REDIRECT_URI`. This branch imports Team 9's
-`slack_client_impl` chat provider only, not that auth layer.
+`slack_client_impl` chat provider through a pinned git dependency only, not that
+auth layer.
 
 ## AI Assistant Webhook Test
 

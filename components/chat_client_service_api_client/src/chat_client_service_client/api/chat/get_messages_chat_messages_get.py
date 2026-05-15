@@ -75,7 +75,7 @@ def sync_detailed(
 ) -> Response[HTTPValidationError | list[MessageModel]]:
     """Get Messages
 
-     Retrieve messages from a channel via telegram_client_impl.
+     Retrieve messages from a channel through the configured provider.
 
     Args:
         channel_id (str):
@@ -109,7 +109,7 @@ def sync(
 ) -> HTTPValidationError | list[MessageModel] | None:
     """Get Messages
 
-     Retrieve messages from a channel via telegram_client_impl.
+     Retrieve messages from a channel through the configured provider.
 
     Args:
         channel_id (str):
@@ -138,7 +138,7 @@ async def asyncio_detailed(
 ) -> Response[HTTPValidationError | list[MessageModel]]:
     """Get Messages
 
-     Retrieve messages from a channel via telegram_client_impl.
+     Retrieve messages from a channel through the configured provider.
 
     Args:
         channel_id (str):
@@ -170,7 +170,7 @@ async def asyncio(
 ) -> HTTPValidationError | list[MessageModel] | None:
     """Get Messages
 
-     Retrieve messages from a channel via telegram_client_impl.
+     Retrieve messages from a channel through the configured provider.
 
     Args:
         channel_id (str):

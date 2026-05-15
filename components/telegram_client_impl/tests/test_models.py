@@ -1,5 +1,7 @@
 """Unit tests for Telegram scaffold against the shared API types."""
 
+from datetime import UTC, datetime
+
 from chat_client_api import Channel, ChatClient, Message
 from telegram_client_impl.client import TelegramClient
 from telegram_client_impl.config import TelegramClientConfig
@@ -25,12 +27,12 @@ def test_shared_message_dataclass_shape() -> None:
         channel="ch-1",
         text="hello",
         sender="alice",
-        timestamp="2026-02-16T10:00:00Z",
+        timestamp=datetime(2026, 2, 16, 10, tzinfo=UTC),
     )
     assert message.message_id == "ch-1:99"
     assert message.channel == "ch-1"
     assert message.sender == "alice"
-    assert message.timestamp == "2026-02-16T10:00:00Z"
+    assert message.timestamp == datetime(2026, 2, 16, 10, tzinfo=UTC)
     assert message.text == "hello"
 
 

@@ -66,7 +66,7 @@ def sync_detailed(
 ) -> Response[HTTPValidationError | MessageModel]:
     """Send Message
 
-     Send a message to a channel via telegram_client_impl.
+     Send a message through the configured ChatClient provider.
 
     Args:
         body (SendMessageRequest): Request payload for sending a message.
@@ -97,7 +97,7 @@ def sync(
 ) -> HTTPValidationError | MessageModel | None:
     """Send Message
 
-     Send a message to a channel via telegram_client_impl.
+     Send a message through the configured ChatClient provider.
 
     Args:
         body (SendMessageRequest): Request payload for sending a message.
@@ -123,7 +123,7 @@ async def asyncio_detailed(
 ) -> Response[HTTPValidationError | MessageModel]:
     """Send Message
 
-     Send a message to a channel via telegram_client_impl.
+     Send a message through the configured ChatClient provider.
 
     Args:
         body (SendMessageRequest): Request payload for sending a message.
@@ -152,7 +152,7 @@ async def asyncio(
 ) -> HTTPValidationError | MessageModel | None:
     """Send Message
 
-     Send a message to a channel via telegram_client_impl.
+     Send a message through the configured ChatClient provider.
 
     Args:
         body (SendMessageRequest): Request payload for sending a message.

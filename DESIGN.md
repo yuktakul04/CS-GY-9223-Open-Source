@@ -77,9 +77,9 @@ updated accordingly.
 For the HW3 same-vertical swap demo, `CHAT_CLIENT_PROVIDER=slack` loads Team
 9's Slack provider based on their HW3 PR #5 implementation through
 [`provider.py`](components/chat_client_service/src/chat_client_service/provider.py).
-The imported Slack content is Team 9's `components/slack_client_impl`, vendored
-locally as `components/slack_client_impl` / `slack-client-impl` from
-<https://github.com/HarshithKoriRaj/CS-GY-9223-Open-Source/pull/5>.
+The Slack provider is pulled as a pinned git dependency from Team 9's
+`components/slack_client_impl` package:
+<https://github.com/HarshithKoriRaj/CS-GY-9223-Open-Source/tree/91eedf88e6823e1f924cbeb05c6a74aa0a524b34/components/slack_client_impl>.
 The generic `/chat/messages` and `/chat/channels` endpoints are unchanged; only
 provider-specific channel and message IDs change. Telegram webhook/login routes
 and the `me` alias remain Telegram-specific.

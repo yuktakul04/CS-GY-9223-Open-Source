@@ -70,7 +70,6 @@ known-first-party = [
     "ai_client_api",
     "openai_client_impl",
     "gemini_client_impl",
-    "slack_client_impl",
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -97,7 +96,6 @@ testpaths = [
     "components/ai_client_api/tests",
     "components/openai_client_impl/tests",
     "components/gemini_client_impl/tests",
-    "components/slack_client_impl/tests",
 ]
 pythonpath = [
     ".",
@@ -109,7 +107,6 @@ pythonpath = [
     "components/ai_client_api/src",
     "components/openai_client_impl/src",
     "components/gemini_client_impl/src",
-    "components/slack_client_impl/src",
 ]
 markers = [
     "e2e: marks end-to-end tests that may require external credentials",
@@ -125,9 +122,16 @@ disable_error_code = ["import-untyped"]
 [[tool.mypy.overrides]]
 module = [
     "telegram_client_impl.client",
-    "slack_client_impl.client",
 ]
 disable_error_code = ["misc"]
+
+[[tool.mypy.overrides]]
+module = [
+    "slack_client_impl",
+    "slack_client_impl.*",
+]
+ignore_missing_imports = true
+follow_imports = "skip"
 
 # Untyped shared ``chat_client_api`` base classes are treated as ``Any`` under strict mode.
 [[tool.mypy.overrides]]
@@ -166,11 +170,15 @@ members = [
     "components/ai_client_api",
     "components/openai_client_impl",
     "components/gemini_client_impl",
-    "components/slack_client_impl",
+]
+
+[tool.uv]
+override-dependencies = [
+    "chat-client-api @ git+https://github.com/HarshithKoriRaj/Shared-API.git@main",
 ]
 
 [tool.uv.sources]
-chat-client-api = { git = "https://github.com/HarshithKoriRaj/Shared-API.git" }
+chat-client-api = { git = "https://github.com/HarshithKoriRaj/Shared-API.git", rev = "main" }
 ospd-issue-tracker-api = { git = "https://github.com/tatyanacthomas/ospd_issue_tracker.git" }
 issue-tracker-client-api = { git = "https://github.com/somadisingh/ospsd-team7-issue-tracker.git", subdirectory = "components/issue_tracker_client_api" }
 issue-tracker-client-impl = { git = "https://github.com/somadisingh/ospsd-team7-issue-tracker.git", subdirectory = "components/trello_client_impl" }
@@ -182,7 +190,7 @@ issue-tracker-integration = { workspace = true }
 ai-client-api = { workspace = true }
 openai-client-impl = { workspace = true }
 gemini-client-impl = { workspace = true }
-slack-client-impl = { workspace = true }
+slack-client-impl = { git = "https://github.com/HarshithKoriRaj/CS-GY-9223-Open-Source", rev = "91eedf88e6823e1f924cbeb05c6a74aa0a524b34", subdirectory = "components/slack_client_impl" }
 
 [tool.coverage.run]
 source = ["components"]

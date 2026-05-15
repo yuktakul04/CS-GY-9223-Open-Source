@@ -71,7 +71,7 @@ def sync_detailed(
 ) -> Response[DeleteMessageResponse | HTTPValidationError]:
     """Delete Message
 
-     Delete a message via telegram_client_impl.
+     Delete a message through the configured ChatClient provider.
 
     Args:
         message_id (str):
@@ -105,7 +105,7 @@ def sync(
 ) -> DeleteMessageResponse | HTTPValidationError | None:
     """Delete Message
 
-     Delete a message via telegram_client_impl.
+     Delete a message through the configured ChatClient provider.
 
     Args:
         message_id (str):
@@ -134,7 +134,7 @@ async def asyncio_detailed(
 ) -> Response[DeleteMessageResponse | HTTPValidationError]:
     """Delete Message
 
-     Delete a message via telegram_client_impl.
+     Delete a message through the configured ChatClient provider.
 
     Args:
         message_id (str):
@@ -166,7 +166,7 @@ async def asyncio(
 ) -> DeleteMessageResponse | HTTPValidationError | None:
     """Delete Message
 
-     Delete a message via telegram_client_impl.
+     Delete a message through the configured ChatClient provider.
 
     Args:
         message_id (str):

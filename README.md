@@ -306,9 +306,9 @@ the bot is present.
 
 Team 4 remains Telegram-first: `CHAT_CLIENT_PROVIDER=telegram` is the default.
 For the HW3 same-vertical demo, `CHAT_CLIENT_PROVIDER=slack` loads Team 9's
-`components/slack_client_impl` from
-<https://github.com/HarshithKoriRaj/CS-GY-9223-Open-Source/pull/5>, vendored
-locally as `slack-client-impl`.
+`components/slack_client_impl` directly from their repository as the pinned
+`slack-client-impl` git dependency:
+<https://github.com/HarshithKoriRaj/CS-GY-9223-Open-Source/tree/91eedf88e6823e1f924cbeb05c6a74aa0a524b34/components/slack_client_impl>.
 
 The shared endpoints stay the same:
 

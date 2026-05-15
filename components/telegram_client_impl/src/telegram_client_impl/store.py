@@ -596,8 +596,21 @@ def _message_from_row(row: sqlite3.Row) -> Message:
         channel=channel_id,
         text=str(row["text"]),
         sender=str(row["sender"]),
-        timestamp=str(row["timestamp"]),
+        timestamp=_parse_timestamp(row["timestamp"]),
     )
+
+
+def _parse_timestamp(value: object) -> datetime:
+    text = str(value)
+    if text.endswith("Z"):
+        text = f"{text[:-1]}+00:00"
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return datetime.now(tz=UTC)
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=UTC)
+    return parsed
 
 
 def _as_dict(value: object) -> dict[str, object]:
