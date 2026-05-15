@@ -17,8 +17,7 @@ AI client components, and issue tracker integration.
 
 ## Deployment
 
-The service is deployed on Render via [`render.yaml`](render.yaml) and observed
-through an AWS CloudWatch dashboard provisioned by Terraform.
+The service is deployed on Render via [`render.yaml`](render.yaml) or spun up through a Terraform deployment pipeline. It is and observed through an AWS CloudWatch dashboard provisioned by Terraform.
 
 - **Live service:** https://chat-client-service-xer8.onrender.com
 - **Health check:** https://chat-client-service-xer8.onrender.com/health
