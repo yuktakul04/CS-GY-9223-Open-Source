@@ -327,28 +327,27 @@ Slack demo Render variables:
 ```bash
 CHAT_CLIENT_PROVIDER=slack
 SLACK_BOT_TOKEN=xoxb-...
+CHAT_CLIENT_DEMO_API_KEY=<random-demo-key>
 ```
 
 From Slack itself, the provider path only needs a Bot User OAuth token
 (`SLACK_BOT_TOKEN`) installed in the workspace and invited to the demo channel.
-Team 4 still requires its own service session because `/chat/...` remains
-protected by Team 4's auth layer.
-
-Keep Team 4's existing `TELEGRAM_BOT_TOKEN`, `SERVICE_BASE_URL`, and session
-settings because `/chat/...` still uses Team 4 service auth. Team 9's Slack
-OAuth auth vars, `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, and
+In Slack mode, `/chat/...` uses `X-Demo-API-Key` for controlled demo access, so
+Telegram login and `X-Session-ID` are not part of the Slack provider flow. Team
+9's Slack OAuth auth vars, `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, and
 `SLACK_REDIRECT_URI`, are not used in this branch.
 
 ```bash
 curl -X POST "$BASE_URL/chat/messages" \
   -H "Content-Type: application/json" \
-  -H "X-Session-ID: $SESSION_ID" \
+  -H "X-Demo-API-Key: $CHAT_CLIENT_DEMO_API_KEY" \
   -d '{"channel_id":"C1234567890","text":"hello from Slack provider"}'
 ```
 
 Telegram-specific routes (`/telegram/webhook`, `/auth/login`, `/auth/callback`)
-remain Telegram-only. See [Chat Provider Swap](docs/chat-provider-swap.md) for
-the full endpoint and Render variable matrix.
+are disabled for the Slack provider path. See
+[Chat Provider Swap](docs/chat-provider-swap.md) for the full endpoint and
+Render variable matrix.
 
 ## Auth Flow
 

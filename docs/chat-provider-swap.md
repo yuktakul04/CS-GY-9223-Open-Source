@@ -47,12 +47,14 @@ the HW2/HW3 service namespace as `/chat/messages` and `/chat/channels`.
 
 ## Auth model
 
-The provider swap is for the chat backend, not for service authentication.
-Team 4 still owns HTTP auth:
+The provider swap is for the chat backend. In Telegram mode, Team 4 uses the
+Telegram login/session auth from the main service. In Slack mode, the demo path
+uses a provider-neutral demo API key so Telegram login does not block Slack
+testing:
 
-- Use `X-Session-ID` or `Authorization: Bearer ...` for `/chat/...`.
-- The existing `/auth/...` routes are Team 4 Telegram login/session routes.
-- They are not Slack OAuth routes, even when `CHAT_CLIENT_PROVIDER=slack`.
+- Telegram mode: use `X-Session-ID` or `Authorization: Bearer ...`.
+- Slack mode: use `X-Demo-API-Key` with `CHAT_CLIENT_DEMO_API_KEY`.
+- The existing Telegram `/auth/...` routes are disabled in Slack mode.
 - Team 9's Slack OAuth service auth is not imported in this branch.
 
 Team 9's PR includes Slack OAuth service auth using `SLACK_CLIENT_ID`,
@@ -65,12 +67,13 @@ that auth layer; the rubric demo swaps only the `ChatClient` provider behind
 ```bash
 CHAT_CLIENT_PROVIDER=slack
 SLACK_BOT_TOKEN=xoxb-...
+CHAT_CLIENT_DEMO_API_KEY=<random-demo-key>
 ```
 
 From Slack itself, the provider-swap path needs only `SLACK_BOT_TOKEN`; it does
-not need Slack OAuth client credentials. Team 4 service auth still protects
-`/chat/...`, and Slack channel access is limited to channels the Slack bot can
-access. Invite the bot to the demo channel before calling `/chat/...`.
+not need Slack OAuth client credentials. The HTTP demo is protected by
+`X-Demo-API-Key`, and Slack channel access is limited to channels the Slack bot
+can access. Invite the bot to the demo channel before calling `/chat/...`.
 
 The Slack bot token must be a Bot User OAuth token installed in the target
 workspace. For the operations implemented by Team 9's `SlackClient`, the bot
@@ -99,18 +102,18 @@ temporarily switch the provider and redeploy/restart with:
 ```bash
 CHAT_CLIENT_PROVIDER=slack
 SLACK_BOT_TOKEN=xoxb-...
+CHAT_CLIENT_DEMO_API_KEY=<random-demo-key>
 ```
 
-Keep the existing Team 4 auth/session variables in place. Do not add
-`SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, or `SLACK_REDIRECT_URI` unless you are
-building the separate Team 9 Slack OAuth auth integration.
+Do not add `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, or `SLACK_REDIRECT_URI`
+unless you are building the separate Team 9 Slack OAuth auth integration.
 
 ## Example
 
 ```bash
 curl -X POST "$BASE_URL/chat/messages" \
   -H "Content-Type: application/json" \
-  -H "X-Session-ID: $SESSION_ID" \
+  -H "X-Demo-API-Key: $CHAT_CLIENT_DEMO_API_KEY" \
   -d '{"channel_id":"C1234567890","text":"hello from Slack provider"}'
 ```
 

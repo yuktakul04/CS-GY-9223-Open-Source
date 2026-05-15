@@ -2,11 +2,13 @@
 
 import html
 import logging
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request, status
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -15,7 +17,11 @@ from chat_client_service.assistant import build_default_orchestrator
 from chat_client_service.config import load_environment
 from chat_client_service.middleware.telemetry import TelemetryMiddleware
 from chat_client_service.models import HealthResponse
-from chat_client_service.provider import is_telegram_provider, load_chat_provider
+from chat_client_service.provider import (
+    configured_chat_provider,
+    is_telegram_provider,
+    load_chat_provider,
+)
 from chat_client_service.routers.auth import router as auth_router
 from chat_client_service.routers.chat import router as chat_router
 from chat_client_service.routers.telegram import router as telegram_router
@@ -301,3 +307,51 @@ def _bot_start_markup(
 app.include_router(auth_router)
 app.include_router(chat_router)
 app.include_router(telegram_router)
+
+
+def _custom_openapi() -> dict[str, object]:
+    """Generate OpenAPI with provider-specific auth guidance for Swagger."""
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    if _slack_demo_auth_enabled():
+        _prefer_demo_key_auth(schema)
+    app.openapi_schema = schema
+    return app.openapi_schema
+
+
+def _slack_demo_auth_enabled() -> bool:
+    return configured_chat_provider() == "slack" and bool(
+        os.getenv("CHAT_CLIENT_DEMO_API_KEY", "").strip()
+    )
+
+
+def _prefer_demo_key_auth(schema: dict[str, object]) -> None:
+    components = schema.get("components")
+    if isinstance(components, dict):
+        schemes = components.get("securitySchemes")
+        if isinstance(schemes, dict) and "DemoAPIKeyHeader" in schemes:
+            components["securitySchemes"] = {
+                "DemoAPIKeyHeader": schemes["DemoAPIKeyHeader"],
+            }
+
+    paths = schema.get("paths")
+    if not isinstance(paths, dict):
+        return
+    for path, operations in paths.items():
+        if not isinstance(path, str) or not path.startswith(("/chat/", "/auth/me")):
+            continue
+        if not isinstance(operations, dict):
+            continue
+        for operation in operations.values():
+            if isinstance(operation, dict) and "security" in operation:
+                operation["security"] = [{"DemoAPIKeyHeader": []}]
+
+
+app.openapi = _custom_openapi  # type: ignore[method-assign]

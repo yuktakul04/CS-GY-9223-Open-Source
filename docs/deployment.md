@@ -56,11 +56,12 @@ switch the existing service and redeploy/restart:
 ```bash
 CHAT_CLIENT_PROVIDER=slack
 SLACK_BOT_TOKEN=xoxb-...
+CHAT_CLIENT_DEMO_API_KEY=<random-demo-key>
 ```
 
-Keep Team 4's existing service-auth variables such as `TELEGRAM_BOT_TOKEN`,
-`SERVICE_BASE_URL`, and `APP_SESSION_SECRET`. The generic `/chat/...` endpoints
-still require Team 4 service auth through `X-Session-ID` or `Authorization`.
+In Slack mode, use `X-Demo-API-Key` for `/chat/...`; Telegram login,
+`X-Session-ID`, and `/telegram/webhook` are not part of the Slack provider demo.
+Keep `APP_SESSION_SECRET` set because the service still signs local auth state.
 Invite the Slack bot to the demo channel before calling `/chat/...`; Slack
 channel access is checked against the bot's Slack-side channel access.
 

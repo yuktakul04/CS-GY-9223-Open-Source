@@ -50,6 +50,7 @@ from chat_client_service.oidc import (
     decode_app_token,
     issue_app_token,
 )
+from chat_client_service.provider import configured_chat_provider, is_telegram_provider
 from telegram_client_impl.client import get_bot_login_target
 from telegram_client_impl.store import StoredChannel, get_store
 
@@ -139,6 +140,7 @@ def create_auth_session(
     config: Annotated[OidcConfig, Depends(get_oidc_config)],
 ) -> AuthSessionResponse:
     """Create a pending service auth session for adapter clients."""
+    _require_telegram_auth_enabled()
     session_id = secrets.token_urlsafe(24)
     bot_username, bot_start_url = _bot_login_target()
     get_store().create_auth_session(
@@ -162,6 +164,7 @@ def auth_login(
     flow: Annotated[str, Query(pattern="^(auto|page|code)$")] = "auto",
 ) -> HTMLResponse | RedirectResponse:
     """Start Telegram Login with OIDC code flow or the hosted page fallback."""
+    _require_telegram_auth_enabled()
     _require_known_session(session_id)
     if flow == "code":
         return _auth_code_redirect(config=config, session_id=session_id)
@@ -278,6 +281,7 @@ def auth_login_config(
     session_id: Annotated[str | None, Query(min_length=1)] = None,
 ) -> TelegramLoginConfigResponse:
     """Return init data for Telegram.Login JavaScript library."""
+    _require_telegram_auth_enabled()
     _require_known_session(session_id)
     try:
         client_id, nonce = begin_login_library(config, session_id=session_id)
@@ -304,6 +308,7 @@ def auth_callback(
     config: Annotated[OidcConfig, Depends(get_oidc_config)],
 ) -> TokenResponse:
     """Complete Telegram OIDC login and issue a local Bearer token."""
+    _require_telegram_auth_enabled()
     try:
         token, session_id = complete_login(config=config, code=code, state=state)
     except ValueError as exc:
@@ -326,6 +331,7 @@ def auth_login_library_callback(
     config: Annotated[OidcConfig, Depends(get_oidc_config)],
 ) -> TokenResponse:
     """Complete Telegram.Login JavaScript id_token callback."""
+    _require_telegram_auth_enabled()
     try:
         token, session_id = complete_login_library(
             config=config,
@@ -357,6 +363,7 @@ def auth_telegram_hash_callback(
     ] = None,
 ) -> TokenResponse:
     """Complete Telegram hash login returned as a URL fragment."""
+    _require_telegram_auth_enabled()
     try:
         token, session_id = complete_telegram_hash_login(
             config=config,
@@ -385,6 +392,7 @@ def auth_verify_legacy(
     config: Annotated[OidcConfig, Depends(get_oidc_config)],
 ) -> OAuthCallbackResponse:
     """Compatibility shim for the parent-branch /auth/verify endpoint."""
+    _require_telegram_auth_enabled()
     state = request.cookies.get(_STATE_COOKIE) or request.cookies.get("oauth_state")
     if not state:
         raise HTTPException(
@@ -496,10 +504,32 @@ def delete_auth_session(
 
 
 def _unauthorized() -> HTTPException:
+    if configured_chat_provider() == "slack":
+        return HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=(
+                "Not authenticated. In Slack provider mode, set "
+                "CHAT_CLIENT_DEMO_API_KEY on the service and send the same value "
+                "as X-Demo-API-Key."
+            ),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Not authenticated. Start at /auth/login.",
         headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+def _require_telegram_auth_enabled() -> None:
+    if is_telegram_provider():
+        return
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=(
+            "Telegram auth routes are disabled when CHAT_CLIENT_PROVIDER is not "
+            "telegram. For the Slack provider demo, use X-Demo-API-Key."
+        ),
     )
 
 

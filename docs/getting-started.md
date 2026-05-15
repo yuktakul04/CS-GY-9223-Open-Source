@@ -34,11 +34,11 @@ Required environment variables:
 - `SERVICE_BASE_URL`
 - `TELEGRAM_UPDATE_MODE=polling` or `webhook`
 - `SLACK_BOT_TOKEN` when using the Slack provider
+- `CHAT_CLIENT_DEMO_API_KEY` when using the Slack provider demo
 
-The Slack provider swap only changes the backend used by `/chat/...`. Team 4's
-Telegram login/session auth still protects those endpoints, so keep
-`TELEGRAM_BOT_TOKEN` and `SERVICE_BASE_URL` configured even when
-`CHAT_CLIENT_PROVIDER=slack`.
+The Slack provider swap changes the backend used by `/chat/...` and uses
+`X-Demo-API-Key` for controlled demo access. Telegram login/session auth is only
+for `CHAT_CLIENT_PROVIDER=telegram`.
 
 Optional AI variables:
 
@@ -63,14 +63,14 @@ curl -H "X-Session-ID: $SESSION_ID" "$BASE_URL/chat/messages?channel_id=me"
 curl -H "X-Session-ID: $SESSION_ID" "$BASE_URL/chat/channels"
 ```
 
-For the Slack provider swap, use the same session header and change only the
-provider env and channel id:
+For the Slack provider swap, use the demo API key and a Slack channel id:
 
 ```bash
 export CHAT_CLIENT_PROVIDER=slack
 export SLACK_BOT_TOKEN=xoxb-...
+export CHAT_CLIENT_DEMO_API_KEY=<random-demo-key>
 curl -X POST "$BASE_URL/chat/messages" \
-  -H "X-Session-ID: $SESSION_ID" \
+  -H "X-Demo-API-Key: $CHAT_CLIENT_DEMO_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"channel_id":"C1234567890","text":"hello from Slack provider"}'
 ```

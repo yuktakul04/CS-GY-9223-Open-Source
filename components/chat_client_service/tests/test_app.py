@@ -143,11 +143,14 @@ def auth_test_env(monkeypatch: pytest.MonkeyPatch) -> Generator[None, None, None
     monkeypatch.setenv("APP_SESSION_SECRET", "app-secret")
     monkeypatch.setenv("CHAT_CLIENT_STORE_PATH", ":memory:")
     monkeypatch.delenv("TELEGRAM_UPDATE_MODE", raising=False)
+    monkeypatch.delenv("CHAT_CLIENT_PROVIDER", raising=False)
     monkeypatch.delenv("CHAT_CLIENT_DEMO_API_KEY", raising=False)
+    app.openapi_schema = None
     client.cookies.clear()
     get_store().clear()
     yield
     app.dependency_overrides.clear()
+    app.openapi_schema = None
     client.cookies.clear()
     get_store().clear()
 
@@ -239,6 +242,29 @@ def test_openapi_hides_html_pages_and_declares_all_auth_schemes() -> None:
         "DemoAPIKeyHeader",
         "APIKeyCookie",
     }
+
+
+def test_slack_openapi_prefers_demo_key_auth(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Slack provider mode presents the demo key path instead of Telegram sessions."""
+    monkeypatch.setenv("CHAT_CLIENT_PROVIDER", "slack")
+    monkeypatch.setenv("CHAT_CLIENT_DEMO_API_KEY", "demo-secret")
+    app.openapi_schema = None
+
+    schema = client.get("/openapi.json").json()
+
+    assert schema["components"]["securitySchemes"] == {
+        "DemoAPIKeyHeader": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-Demo-API-Key",
+        }
+    }
+    assert schema["paths"]["/chat/messages"]["get"]["security"] == [
+        {"DemoAPIKeyHeader": []}
+    ]
+    assert schema["paths"]["/auth/me"]["get"]["security"] == [{"DemoAPIKeyHeader": []}]
 
 
 def test_health_request_emits_success_telemetry() -> None:
@@ -961,6 +987,19 @@ def test_auth_me_requires_valid_token() -> None:
     assert response.status_code == 401
 
 
+def test_slack_mode_unauthorized_points_to_demo_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Slack provider mode does not tell callers to start Telegram login."""
+    monkeypatch.setenv("CHAT_CLIENT_PROVIDER", "slack")
+
+    response = client.get("/chat/channels")
+
+    assert response.status_code == 401
+    assert "X-Demo-API-Key" in response.json()["detail"]
+    assert "/auth/login" not in response.json()["detail"]
+
+
 def test_auth_me_decodes_local_token() -> None:
     """Issued local tokens authenticate /auth/me."""
     config = OidcConfig(
@@ -1007,6 +1046,30 @@ def test_demo_api_key_is_disabled_when_unconfigured() -> None:
     response = client.get("/auth/me", headers={"X-Demo-API-Key": "demo-secret"})
 
     assert response.status_code == 401
+
+
+def test_telegram_auth_sessions_are_disabled_in_slack_mode(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Slack provider mode does not expose Telegram session auth as the demo path."""
+    monkeypatch.setenv("CHAT_CLIENT_PROVIDER", "slack")
+
+    response = client.post("/auth/sessions")
+
+    assert response.status_code == 400
+    assert "X-Demo-API-Key" in response.json()["detail"]
+
+
+def test_telegram_webhook_is_disabled_in_slack_mode(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Telegram webhooks are not processed while the chat provider is Slack."""
+    monkeypatch.setenv("CHAT_CLIENT_PROVIDER", "slack")
+
+    response = client.post("/telegram/webhook", json={"update_id": 1})
+
+    assert response.status_code == 404
+    assert "disabled" in response.json()["detail"]
 
 
 def test_decode_app_token_omits_null_optional_claims() -> None:
