@@ -34,7 +34,6 @@ Required environment variables:
 - `SERVICE_BASE_URL`
 - `TELEGRAM_UPDATE_MODE=polling` or `webhook`
 - `SLACK_BOT_TOKEN` when using the Slack provider
-- `CHAT_CLIENT_ALLOWED_CHANNEL_IDS` for Slack channel access through `/chat`
 
 The Slack provider swap only changes the backend used by `/chat/...`. Team 4's
 Telegram login/session auth still protects those endpoints, so keep
@@ -70,7 +69,6 @@ provider env and channel id:
 ```bash
 export CHAT_CLIENT_PROVIDER=slack
 export SLACK_BOT_TOKEN=xoxb-...
-export CHAT_CLIENT_ALLOWED_CHANNEL_IDS=C1234567890
 curl -X POST "$BASE_URL/chat/messages" \
   -H "X-Session-ID: $SESSION_ID" \
   -H "Content-Type: application/json" \

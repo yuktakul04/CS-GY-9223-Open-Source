@@ -137,14 +137,6 @@ variable "slack_bot_token" {
   nullable    = true
 }
 
-variable "chat_client_allowed_channel_ids" {
-  description = "Optional comma-separated allowlist for provider-neutral /chat channel access."
-  type        = string
-  sensitive   = true
-  default     = null
-  nullable    = true
-}
-
 variable "trello_api_key" {
   description = "Optional Trello API key."
   type        = string

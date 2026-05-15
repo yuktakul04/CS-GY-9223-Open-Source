@@ -69,7 +69,6 @@ Core environment variables:
 - `SERVICE_BASE_URL`
 - `TELEGRAM_UPDATE_MODE=polling` or `webhook`
 - `SLACK_BOT_TOKEN` when `CHAT_CLIENT_PROVIDER=slack`
-- `CHAT_CLIENT_ALLOWED_CHANNEL_IDS` for provider-neutral `/chat` channel access
 
 Optional AI assistant variables:
 
@@ -120,7 +119,6 @@ Optional `.env` values that the wrapper also maps for Terraform:
 - `TRELLO_BOARD_ID`
 - `SLACK_BOT_TOKEN`
 - `CHAT_CLIENT_PROVIDER`
-- `CHAT_CLIENT_ALLOWED_CHANNEL_IDS`
 - `CHAT_CLIENT_ASSISTANT_PROVIDER`
 - `CHAT_CLIENT_STORE_PATH`
 - `TELEGRAM_UPDATE_MODE`
@@ -329,13 +327,12 @@ Slack demo Render variables:
 ```bash
 CHAT_CLIENT_PROVIDER=slack
 SLACK_BOT_TOKEN=xoxb-...
-CHAT_CLIENT_ALLOWED_CHANNEL_IDS=C1234567890
 ```
 
 From Slack itself, the provider path only needs a Bot User OAuth token
 (`SLACK_BOT_TOKEN`) installed in the workspace and invited to the demo channel.
-Team 4 still requires its own service session plus `CHAT_CLIENT_ALLOWED_CHANNEL_IDS`
-because `/chat/...` remains protected by Team 4's auth layer.
+Team 4 still requires its own service session because `/chat/...` remains
+protected by Team 4's auth layer.
 
 Keep Team 4's existing `TELEGRAM_BOT_TOKEN`, `SERVICE_BASE_URL`, and session
 settings because `/chat/...` still uses Team 4 service auth. Team 9's Slack

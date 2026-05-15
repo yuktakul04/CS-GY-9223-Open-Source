@@ -5,7 +5,9 @@ from __future__ import annotations
 import importlib
 import os
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
+
+from slack_sdk.errors import SlackApiError
 
 from chat_client_api import ChatClient, Message, register_client
 
@@ -85,6 +87,24 @@ class _SlackCompatibilityClient(ChatClient):
     def delete_message(self, message_id: str) -> None:
         self._inner.delete_message(message_id)
 
+    def user_can_access_channel(self, user_id: str, channel_id: str) -> bool:  # noqa: ARG002
+        """Return whether the Slack bot can operate in the requested channel."""
+        slack_web_client = getattr(self._inner, "client", None)
+        conversations_info = getattr(slack_web_client, "conversations_info", None)
+        if callable(conversations_info):
+            try:
+                response = conversations_info(channel=channel_id)
+            except (SlackApiError, TypeError, ValueError):
+                return False
+            channel = _response_channel(response)
+            if "is_member" in channel:
+                return bool(channel["is_member"])
+        try:
+            self._inner.get_channel(channel_id)
+        except ValueError:
+            return False
+        return True
+
 
 def _normalize_message(message: Message) -> Message:
     if isinstance(message.timestamp, datetime):
@@ -96,6 +116,13 @@ def _normalize_message(message: Message) -> Message:
         sender=message.sender,
         timestamp=_parse_timestamp(message.timestamp),
     )
+
+
+def _response_channel(response: object) -> dict[str, Any]:
+    if not isinstance(response, dict):
+        return {}
+    channel = response.get("channel")
+    return channel if isinstance(channel, dict) else {}
 
 
 def _parse_timestamp(value: object) -> datetime:

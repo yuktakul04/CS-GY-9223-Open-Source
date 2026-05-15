@@ -41,7 +41,6 @@ locals {
 
   render_optional_secret_env_values = {
     APP_SESSION_SECRET              = var.app_session_secret
-    CHAT_CLIENT_ALLOWED_CHANNEL_IDS = var.chat_client_allowed_channel_ids
     GEMINI_API_KEY                  = var.gemini_api_key
     OPENAI_API_KEY                  = var.openai_api_key
     SLACK_BOT_TOKEN                 = var.slack_bot_token

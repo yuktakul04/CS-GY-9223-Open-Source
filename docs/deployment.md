@@ -32,7 +32,6 @@ outside the uv workspace — and runs the FastAPI app under uvicorn.
 | `CHAT_CLIENT_PROVIDER` | `telegram` or `slack` | Selects ChatClient backend |
 | `CHAT_CLIENT_STORE_PATH` | SQLite path | Default `/tmp/chat_client.sqlite3` (Render ephemeral) |
 | `SLACK_BOT_TOKEN` | Slack bot auth | Required when `CHAT_CLIENT_PROVIDER=slack` |
-| `CHAT_CLIENT_ALLOWED_CHANNEL_IDS` | Provider-neutral channel allowlist | Required for Slack demo channels |
 | `TELEGRAM_UPDATE_MODE` | `polling` or `webhook` | Default `polling` |
 | `TELEGRAM_POLL_INTERVAL_SECONDS` | Long-poll interval | Default `3` |
 | `CHAT_CLIENT_ASSISTANT_PROVIDER` | `openai` or `gemini` | Selects AI backend |
@@ -56,12 +55,13 @@ switch the existing service and redeploy/restart:
 ```bash
 CHAT_CLIENT_PROVIDER=slack
 SLACK_BOT_TOKEN=xoxb-...
-CHAT_CLIENT_ALLOWED_CHANNEL_IDS=C1234567890
 ```
 
 Keep Team 4's existing service-auth variables such as `TELEGRAM_BOT_TOKEN`,
 `SERVICE_BASE_URL`, and `APP_SESSION_SECRET`. The generic `/chat/...` endpoints
 still require Team 4 service auth through `X-Session-ID` or `Authorization`.
+Invite the Slack bot to the demo channel before calling `/chat/...`; Slack
+channel access is checked against the bot's Slack-side channel access.
 
 Do not add `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, or `SLACK_REDIRECT_URI`
 unless you are building a separate Slack OAuth auth integration. Those variables

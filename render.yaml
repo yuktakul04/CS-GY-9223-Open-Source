@@ -17,8 +17,6 @@ services:
         value: telegram
       - key: CHAT_CLIENT_STORE_PATH
         value: /tmp/chat_client.sqlite3
-      - key: CHAT_CLIENT_ALLOWED_CHANNEL_IDS
-        sync: false
       - key: SLACK_BOT_TOKEN
         sync: false
       - key: TELEGRAM_UPDATE_MODE

@@ -65,16 +65,12 @@ that auth layer; the rubric demo swaps only the `ChatClient` provider behind
 ```bash
 CHAT_CLIENT_PROVIDER=slack
 SLACK_BOT_TOKEN=xoxb-...
-CHAT_CLIENT_ALLOWED_CHANNEL_IDS=C1234567890
 ```
 
 From Slack itself, the provider-swap path needs only `SLACK_BOT_TOKEN`; it does
-not need Slack OAuth client credentials. The other variables are Team 4 service
-configuration: provider selection and channel authorization for `/chat/...`.
-
-`CHAT_CLIENT_ALLOWED_CHANNEL_IDS` authorizes provider-neutral channel access for
-the generic `/chat` routes. Use a comma-separated list for multiple channels.
-Avoid `*` on public deployments unless it is a short-lived demo service.
+not need Slack OAuth client credentials. Team 4 service auth still protects
+`/chat/...`, and Slack channel access is limited to channels the Slack bot can
+access. Invite the bot to the demo channel before calling `/chat/...`.
 
 The Slack bot token must be a Bot User OAuth token installed in the target
 workspace. For the operations implemented by Team 9's `SlackClient`, the bot
@@ -103,7 +99,6 @@ temporarily switch the provider and redeploy/restart with:
 ```bash
 CHAT_CLIENT_PROVIDER=slack
 SLACK_BOT_TOKEN=xoxb-...
-CHAT_CLIENT_ALLOWED_CHANNEL_IDS=C1234567890
 ```
 
 Keep the existing Team 4 auth/session variables in place. Do not add

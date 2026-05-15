@@ -1257,10 +1257,20 @@ def test_send_message_uses_configured_slack_provider(
             self.sent = {"channel": channel, "text": text}
             return {"ok": True, "channel": channel, "ts": "1715200000.000100"}
 
+        def conversations_info(self, *, channel: str) -> dict[str, object]:
+            return {
+                "ok": True,
+                "channel": {
+                    "id": channel,
+                    "name": "demo",
+                    "is_private": False,
+                    "is_member": True,
+                },
+            }
+
     fake_slack = FakeSlackWebClient(token="xoxb-test")
     monkeypatch.setenv("CHAT_CLIENT_PROVIDER", "slack")
     monkeypatch.setenv("SLACK_BOT_TOKEN", "xoxb-test")
-    monkeypatch.setenv("CHAT_CLIENT_ALLOWED_CHANNEL_IDS", "C1234567890")
 
     def build_fake_web_client(*, token: str) -> FakeSlackWebClient:
         assert token == "xoxb-test"

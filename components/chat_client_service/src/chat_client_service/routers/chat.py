@@ -1,6 +1,5 @@
 """Chat operation endpoints delegating through chat_client_api."""
 
-import os
 from datetime import datetime
 from typing import Annotated
 
@@ -259,8 +258,6 @@ def _can_access_channel(
     client: ChatClient,
 ) -> bool:
     telegram_id = claims.get("telegram_id", "")
-    if _channel_allowed_by_service_config(channel_id):
-        return True
     if get_store().user_can_access(telegram_id=telegram_id, channel_id=channel_id):
         return True
 
@@ -372,11 +369,3 @@ def _missing_bot_start_detail() -> str:
 
 def _is_telegram_send_message_error(exc: Exception) -> bool:
     return isinstance(exc, TelegramClientError) and exc.method == "sendMessage"
-
-
-def _channel_allowed_by_service_config(channel_id: str) -> bool:
-    raw = os.getenv("CHAT_CLIENT_ALLOWED_CHANNEL_IDS", "").strip()
-    if not raw:
-        return False
-    allowed = {part.strip() for part in raw.split(",") if part.strip()}
-    return "*" in allowed or channel_id in allowed
