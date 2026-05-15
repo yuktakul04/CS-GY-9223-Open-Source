@@ -309,7 +309,7 @@ def test_unhandled_exception_still_emits_failure_telemetry() -> None:
     assert response.status_code == 500
     kwargs = _awaited_call_kwargs(publish_metrics)
     assert kwargs["endpoint"] == "/telemetry-boom"
-    assert kwargs["status_code"] == 0  # sentinel: exception escaped before a response was produced
+    assert kwargs["status_code"] == 0  # sentinel: no HTTP response produced
     assert kwargs["success"] == 0
     assert kwargs["failure"] == 1
 
