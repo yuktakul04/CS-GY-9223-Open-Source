@@ -71,11 +71,9 @@ jobs:
           name: Run tests
           command: |
             mkdir -p test-results
-            uv run pytest --junitxml=test-results/pytest.xml --cov=components --cov-report=xml --cov-fail-under=0 tests/integration
+            uv run pytest --junitxml=test-results/pytest.xml tests/integration
       - store_test_results:
           path: test-results
-      - store_artifacts:
-          path: coverage.xml
 
   e2e-tests:
     <<: *python-docker
