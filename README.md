@@ -25,8 +25,19 @@ through an AWS CloudWatch dashboard provisioned by Terraform.
 - **API docs (Swagger UI):** https://chat-client-service-xer8.onrender.com/docs
 - **Telemetry dashboard:** [OSPSD-HW3-ChatService on CloudWatch](https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=OSPSD-HW3-ChatService)
 
-CircleCI pings the Render deploy hook on green builds of `gemini-client` and
-`main`; see [`.circleci/config.yml`](.circleci/config.yml).
+CircleCI pings the Render deploy hook on green builds of `hw3`; see
+[`.circleci/config.yml`](.circleci/config.yml).
+
+## CI/CD
+
+The CircleCI pipeline runs in four sequential tiers:
+
+```
+lint → unit-tests → integration-tests → e2e-tests → deploy
+```
+
+Each tier runs independently. Coverage threshold is enforced on unit tests.
+Pushes to `hw3` automatically deploy to Render on green builds.
 
 ## Prerequisites
 
@@ -366,6 +377,13 @@ Issue tracker tool calls additionally require:
 - `TRELLO_API_KEY`
 - `TRELLO_TOKEN`
 
+### Resilience Patterns
+
+Both OpenAI and Gemini clients include built-in resilience. Transient errors
+(rate limits, timeouts, 5xx) are retried up to 3 times with exponential backoff
+and jitter. A circuit breaker prevents repeated calls when the provider is
+consistently failing.
+
 Webhook smoke test:
 
 ```bash
@@ -415,6 +433,7 @@ Expected behavior:
 ├── tests/                                 # Integration / e2e tests
 ├── docs/                                  # MkDocs documentation
 ├── .circleci/                             # CircleCI CI/CD configuration
+├── infra/                                 # Terraform IaC
 ├── pyproject.toml                         # Workspace configuration
 └── render.yaml                            # Render blueprint
 ```
