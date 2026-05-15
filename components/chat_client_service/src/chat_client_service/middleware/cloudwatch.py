@@ -83,7 +83,13 @@ def _build_cloudwatch_handler(config: CloudWatchConfig) -> logging.Handler:
 
 @lru_cache(maxsize=1)
 def get_telemetry_logger() -> logging.Logger:
-    """Return the shared telemetry logger."""
+    """Return the shared telemetry logger.
+
+    Initialised exactly once per process lifetime. If CloudWatch is
+    unavailable at first call the logger falls back to stdout and stays
+    there permanently — recovering CloudWatch connectivity requires a
+    process restart.
+    """
     config = load_cloudwatch_config()
 
     logger = logging.getLogger(_LOGGER_NAME)

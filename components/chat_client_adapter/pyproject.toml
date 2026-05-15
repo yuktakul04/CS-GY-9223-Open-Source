@@ -3,7 +3,7 @@ name = "chat-client-adapter"
 version = "0.1.0"
 description = "Adapter that implements chat_client_api using chat_client_service"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = ["chat-client-api", "chat-client-service-api-client"]
 
 [build-system]

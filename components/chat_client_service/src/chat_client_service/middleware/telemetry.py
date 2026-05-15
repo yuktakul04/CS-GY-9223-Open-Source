@@ -15,7 +15,8 @@ _LOGGER = logging.getLogger(__name__)
 
 _NAMESPACE = "OSPSD/HW3"
 _SERVICE = "chat_client_service"
-_FAILURE_STATUS_CODE = 500
+# sentinel: 0 means an exception escaped before any HTTP response was produced
+_UNHANDLED_EXCEPTION_STATUS_CODE = 0
 _FAILURE_STATUS_THRESHOLD = 400
 
 if TYPE_CHECKING:
@@ -133,7 +134,7 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
                 service=_SERVICE,
                 endpoint=_endpoint_from_request(request),
                 latency_ms=latency_ms,
-                status_code=_FAILURE_STATUS_CODE,
+                status_code=_UNHANDLED_EXCEPTION_STATUS_CODE,
                 success=0,
                 failure=1,
             )
