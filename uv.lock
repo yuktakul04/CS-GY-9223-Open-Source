@@ -14,7 +14,7 @@ members = [
     "openai-client-impl",
     "telegram-client-impl",
 ]
-overrides = [{ name = "chat-client-api", git = "https://github.com/HarshithKoriRaj/Shared-API.git?rev=main" }]
+overrides = [{ name = "chat-client-api", git = "https://github.com/HarshithKoriRaj/Shared-API.git?rev=ebb37e189065760f2090f1488d376485b7b56b20" }]
 
 [[package]]
 name = "ai-client-api"
@@ -293,7 +293,7 @@ docs = [
 [package.metadata]
 requires-dist = [
     { name = "attrs", marker = "extra == 'dev'", specifier = ">=23.0.0" },
-    { name = "chat-client-api", git = "https://github.com/HarshithKoriRaj/Shared-API.git?rev=main" },
+    { name = "chat-client-api", git = "https://github.com/HarshithKoriRaj/Shared-API.git?rev=ebb37e189065760f2090f1488d376485b7b56b20" },
     { name = "fastapi", marker = "extra == 'dev'", specifier = ">=0.115.0" },
     { name = "gemini-client-impl", editable = "components/gemini_client_impl" },
     { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27.0" },
@@ -302,7 +302,7 @@ requires-dist = [
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.5.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.8.0" },
     { name = "openai-client-impl", editable = "components/openai_client_impl" },
-    { name = "ospd-issue-tracker-api", git = "https://github.com/tatyanacthomas/ospd_issue_tracker.git" },
+    { name = "ospd-issue-tracker-api", git = "https://github.com/tatyanacthomas/ospd_issue_tracker.git?rev=63abe1c8607fce7e92a1a68475580fd380e3a1ed" },
     { name = "pydantic", marker = "extra == 'dev'", specifier = ">=2.8.0" },
     { name = "pyjwt", extras = ["crypto"], marker = "extra == 'dev'", specifier = ">=2.8.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
@@ -326,14 +326,14 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "chat-client-api", git = "https://github.com/HarshithKoriRaj/Shared-API.git?rev=main" },
+    { name = "chat-client-api", git = "https://github.com/HarshithKoriRaj/Shared-API.git?rev=ebb37e189065760f2090f1488d376485b7b56b20" },
     { name = "chat-client-service-api-client", editable = "components/chat_client_service_api_client" },
 ]
 
 [[package]]
 name = "chat-client-api"
 version = "0.1.0"
-source = { git = "https://github.com/HarshithKoriRaj/Shared-API.git?rev=main#ebb37e189065760f2090f1488d376485b7b56b20" }
+source = { git = "https://github.com/HarshithKoriRaj/Shared-API.git?rev=ebb37e189065760f2090f1488d376485b7b56b20#ebb37e189065760f2090f1488d376485b7b56b20" }
 
 [[package]]
 name = "chat-client-service"
@@ -360,11 +360,11 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "ai-client-api", editable = "components/ai_client_api" },
-    { name = "chat-client-api", git = "https://github.com/HarshithKoriRaj/Shared-API.git?rev=main" },
+    { name = "chat-client-api", git = "https://github.com/HarshithKoriRaj/Shared-API.git?rev=ebb37e189065760f2090f1488d376485b7b56b20" },
     { name = "fastapi", specifier = ">=0.115.0" },
     { name = "gemini-client-impl", editable = "components/gemini_client_impl" },
     { name = "httpx", specifier = ">=0.27.0" },
-    { name = "issue-tracker-client-impl", git = "https://github.com/somadisingh/ospsd-team7-issue-tracker.git?subdirectory=components%2Ftrello_client_impl" },
+    { name = "issue-tracker-client-impl", git = "https://github.com/somadisingh/ospsd-team7-issue-tracker.git?subdirectory=components%2Ftrello_client_impl&rev=16040e1ccd5e7e79c8b3819a0209b103196ba98f" },
     { name = "issue-tracker-integration", editable = "components/issue_tracker_integration" },
     { name = "openai-client-impl", editable = "components/openai_client_impl" },
     { name = "pydantic", specifier = ">=2.0.0" },
@@ -700,12 +700,12 @@ wheels = [
 [[package]]
 name = "issue-tracker-client-api"
 version = "0.1.0"
-source = { git = "https://github.com/somadisingh/ospsd-team7-issue-tracker.git?subdirectory=components%2Fissue_tracker_client_api#16040e1ccd5e7e79c8b3819a0209b103196ba98f" }
+source = { git = "https://github.com/somadisingh/ospsd-team7-issue-tracker.git?subdirectory=components%2Fissue_tracker_client_api&rev=16040e1ccd5e7e79c8b3819a0209b103196ba98f#16040e1ccd5e7e79c8b3819a0209b103196ba98f" }
 
 [[package]]
 name = "issue-tracker-client-impl"
 version = "0.1.0"
-source = { git = "https://github.com/somadisingh/ospsd-team7-issue-tracker.git?subdirectory=components%2Ftrello_client_impl#16040e1ccd5e7e79c8b3819a0209b103196ba98f" }
+source = { git = "https://github.com/somadisingh/ospsd-team7-issue-tracker.git?subdirectory=components%2Ftrello_client_impl&rev=16040e1ccd5e7e79c8b3819a0209b103196ba98f#16040e1ccd5e7e79c8b3819a0209b103196ba98f" }
 dependencies = [
     { name = "issue-tracker-client-api" },
     { name = "requests" },
@@ -727,10 +727,10 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "ai-client-api", editable = "components/ai_client_api" },
-    { name = "chat-client-api", git = "https://github.com/HarshithKoriRaj/Shared-API.git?rev=main" },
-    { name = "issue-tracker-client-api", git = "https://github.com/somadisingh/ospsd-team7-issue-tracker.git?subdirectory=components%2Fissue_tracker_client_api" },
-    { name = "issue-tracker-client-impl", git = "https://github.com/somadisingh/ospsd-team7-issue-tracker.git?subdirectory=components%2Ftrello_client_impl" },
-    { name = "ospd-issue-tracker-api", git = "https://github.com/tatyanacthomas/ospd_issue_tracker.git" },
+    { name = "chat-client-api", git = "https://github.com/HarshithKoriRaj/Shared-API.git?rev=ebb37e189065760f2090f1488d376485b7b56b20" },
+    { name = "issue-tracker-client-api", git = "https://github.com/somadisingh/ospsd-team7-issue-tracker.git?subdirectory=components%2Fissue_tracker_client_api&rev=16040e1ccd5e7e79c8b3819a0209b103196ba98f" },
+    { name = "issue-tracker-client-impl", git = "https://github.com/somadisingh/ospsd-team7-issue-tracker.git?subdirectory=components%2Ftrello_client_impl&rev=16040e1ccd5e7e79c8b3819a0209b103196ba98f" },
+    { name = "ospd-issue-tracker-api", git = "https://github.com/tatyanacthomas/ospd_issue_tracker.git?rev=63abe1c8607fce7e92a1a68475580fd380e3a1ed" },
     { name = "requests", specifier = ">=2.31.0" },
 ]
 
@@ -1116,7 +1116,7 @@ requires-dist = [
 [[package]]
 name = "ospd-issue-tracker-api"
 version = "0.1.0"
-source = { git = "https://github.com/tatyanacthomas/ospd_issue_tracker.git#63abe1c8607fce7e92a1a68475580fd380e3a1ed" }
+source = { git = "https://github.com/tatyanacthomas/ospd_issue_tracker.git?rev=63abe1c8607fce7e92a1a68475580fd380e3a1ed#63abe1c8607fce7e92a1a68475580fd380e3a1ed" }
 
 [[package]]
 name = "packaging"

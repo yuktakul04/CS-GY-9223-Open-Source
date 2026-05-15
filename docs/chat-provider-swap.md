@@ -21,6 +21,9 @@ The Slack provider is optional demo support based on imported Team 9 content:
 
 This external package is loaded only when `CHAT_CLIENT_PROVIDER=slack`.
 Team 4's own provider remains `telegram_client_impl`.
+Team 4 wraps the imported Slack client at provider-load time to normalize Slack
+`ts` timestamps into the canonical shared API's timezone-aware `datetime`
+contract.
 
 ## Reusable endpoints
 
@@ -64,6 +67,10 @@ CHAT_CLIENT_PROVIDER=slack
 SLACK_BOT_TOKEN=xoxb-...
 CHAT_CLIENT_ALLOWED_CHANNEL_IDS=C1234567890
 ```
+
+From Slack itself, the provider-swap path needs only `SLACK_BOT_TOKEN`; it does
+not need Slack OAuth client credentials. The other variables are Team 4 service
+configuration: provider selection and channel authorization for `/chat/...`.
 
 `CHAT_CLIENT_ALLOWED_CHANNEL_IDS` authorizes provider-neutral channel access for
 the generic `/chat` routes. Use a comma-separated list for multiple channels.

@@ -21,6 +21,6 @@ build-backend = "hatchling.build"
 packages = ["src/issue_tracker_integration"]
 
 [tool.uv.sources]
-ospd-issue-tracker-api = { git = "https://github.com/tatyanacthomas/ospd_issue_tracker.git" }
-issue-tracker-client-api = { git = "https://github.com/somadisingh/ospsd-team7-issue-tracker.git", subdirectory = "components/issue_tracker_client_api" }
-issue-tracker-client-impl = { git = "https://github.com/somadisingh/ospsd-team7-issue-tracker.git", subdirectory = "components/trello_client_impl" }
+ospd-issue-tracker-api = { git = "https://github.com/tatyanacthomas/ospd_issue_tracker.git", rev = "63abe1c8607fce7e92a1a68475580fd380e3a1ed" }
+issue-tracker-client-api = { git = "https://github.com/somadisingh/ospsd-team7-issue-tracker.git", rev = "16040e1ccd5e7e79c8b3819a0209b103196ba98f", subdirectory = "components/issue_tracker_client_api" }
+issue-tracker-client-impl = { git = "https://github.com/somadisingh/ospsd-team7-issue-tracker.git", rev = "16040e1ccd5e7e79c8b3819a0209b103196ba98f", subdirectory = "components/trello_client_impl" }

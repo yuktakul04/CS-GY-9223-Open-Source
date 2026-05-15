@@ -1283,7 +1283,9 @@ def test_send_message_uses_configured_slack_provider(
         app.dependency_overrides.pop(get_current_claims, None)
 
     assert response.status_code == 200
-    assert response.json()["id"] == "C1234567890:1715200000.000100"
+    body = response.json()
+    assert body["id"] == "C1234567890:1715200000.000100"
+    assert body["timestamp"] == "2024-05-08T20:26:40.000100+00:00"
     assert fake_slack.sent == {
         "channel": "C1234567890",
         "text": "hello from Slack provider",

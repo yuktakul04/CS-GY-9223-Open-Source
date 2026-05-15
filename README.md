@@ -25,8 +25,8 @@ through an AWS CloudWatch dashboard provisioned by Terraform.
 - **API docs (Swagger UI):** `https://csgy9223.onrender.com/docs`
 - **Telemetry dashboard:** [OSPSD-HW3-ChatService on CloudWatch](https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=OSPSD-HW3-ChatService)
 
-CircleCI pings the Render deploy hook on green builds of `gemini-client` and
-`main`; see [`.circleci/config.yml`](.circleci/config.yml).
+CircleCI pings the Render deploy hook on green builds of `hw3` and `main`;
+see [`.circleci/config.yml`](.circleci/config.yml).
 
 ## Prerequisites
 
@@ -134,7 +134,7 @@ the current Render free-tier deployment, use:
 
 ```bash
 RENDER_SERVICE_PLAN=free
-RENDER_REPO_BRANCH=gemini-client
+RENDER_REPO_BRANCH=hw3
 TELEGRAM_UPDATE_MODE=polling
 CHAT_CLIENT_PROVIDER=telegram
 CHAT_CLIENT_ASSISTANT_PROVIDER=gemini
@@ -331,6 +331,11 @@ CHAT_CLIENT_PROVIDER=slack
 SLACK_BOT_TOKEN=xoxb-...
 CHAT_CLIENT_ALLOWED_CHANNEL_IDS=C1234567890
 ```
+
+From Slack itself, the provider path only needs a Bot User OAuth token
+(`SLACK_BOT_TOKEN`) installed in the workspace and invited to the demo channel.
+Team 4 still requires its own service session plus `CHAT_CLIENT_ALLOWED_CHANNEL_IDS`
+because `/chat/...` remains protected by Team 4's auth layer.
 
 Keep Team 4's existing `TELEGRAM_BOT_TOKEN`, `SERVICE_BASE_URL`, and session
 settings because `/chat/...` still uses Team 4 service auth. Team 9's Slack

@@ -41,8 +41,12 @@ def test_load_chat_provider_selects_team9_slack_impl(
     selected = load_chat_provider()
 
     slack_module = importlib.import_module("slack_client_impl.client")
+    client = chat_client_api.get_client()
     assert selected == "slack"
-    assert isinstance(chat_client_api.get_client(), slack_module.SlackClient)
+    assert client.__class__.__name__ == "_SlackCompatibilityClient"
+    assert isinstance(
+        object.__getattribute__(client, "_inner"), slack_module.SlackClient
+    )
 
 
 def test_load_chat_provider_rejects_unknown_provider(

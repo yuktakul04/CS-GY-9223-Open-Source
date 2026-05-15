@@ -80,6 +80,9 @@ For the HW3 same-vertical swap demo, `CHAT_CLIENT_PROVIDER=slack` loads Team
 The Slack provider is pulled as a pinned git dependency from Team 9's
 `components/slack_client_impl` package:
 <https://github.com/HarshithKoriRaj/CS-GY-9223-Open-Source/tree/91eedf88e6823e1f924cbeb05c6a74aa0a524b34/components/slack_client_impl>.
+Team 4 wraps that provider in a small compatibility adapter because Team 9's
+Slack timestamps are Slack `ts` strings while the canonical shared API expects
+timezone-aware `datetime` values.
 The generic `/chat/messages` and `/chat/channels` endpoints are unchanged; only
 provider-specific channel and message IDs change. Telegram webhook/login routes
 and the `me` alias remain Telegram-specific.

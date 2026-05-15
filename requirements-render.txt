@@ -1,10 +1,10 @@
 uvicorn>=0.30.0
 python-dotenv>=1.1.0
 watchtower>=3.3.1
-chat-client-api @ git+https://github.com/HarshithKoriRaj/Shared-API.git
-ospd-issue-tracker-api @ git+https://github.com/tatyanacthomas/ospd_issue_tracker.git
-issue-tracker-client-api @ git+https://github.com/somadisingh/ospsd-team7-issue-tracker.git#subdirectory=components/issue_tracker_client_api
-issue-tracker-client-impl @ git+https://github.com/somadisingh/ospsd-team7-issue-tracker.git#subdirectory=components/trello_client_impl
+chat-client-api @ git+https://github.com/HarshithKoriRaj/Shared-API.git@ebb37e189065760f2090f1488d376485b7b56b20
+ospd-issue-tracker-api @ git+https://github.com/tatyanacthomas/ospd_issue_tracker.git@63abe1c8607fce7e92a1a68475580fd380e3a1ed
+issue-tracker-client-api @ git+https://github.com/somadisingh/ospsd-team7-issue-tracker.git@16040e1ccd5e7e79c8b3819a0209b103196ba98f#subdirectory=components/issue_tracker_client_api
+issue-tracker-client-impl @ git+https://github.com/somadisingh/ospsd-team7-issue-tracker.git@16040e1ccd5e7e79c8b3819a0209b103196ba98f#subdirectory=components/trello_client_impl
 slack-client-impl @ git+https://github.com/HarshithKoriRaj/CS-GY-9223-Open-Source.git@91eedf88e6823e1f924cbeb05c6a74aa0a524b34#subdirectory=components/slack_client_impl
 -e ./components/ai_client_api
 -e ./components/openai_client_impl
