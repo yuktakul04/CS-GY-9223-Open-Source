@@ -29,6 +29,7 @@ outside the uv workspace — and runs the FastAPI app under uvicorn.
 | `TELEGRAM_BOT_TOKEN` | Bot API auth | Secret, set in Render UI |
 | `SERVICE_BASE_URL` | Public URL for webhooks/links | Secret |
 | `APP_SESSION_TTL_SECONDS` | OIDC session lifetime | Default `3600` |
+| `CHAT_CLIENT_DEMO_API_KEY` | Optional Swagger/demo auth key | Use only for controlled demos |
 | `CHAT_CLIENT_PROVIDER` | `telegram` or `slack` | Selects ChatClient backend |
 | `CHAT_CLIENT_STORE_PATH` | SQLite path | Default `/tmp/chat_client.sqlite3` (Render ephemeral) |
 | `SLACK_BOT_TOKEN` | Slack bot auth | Required when `CHAT_CLIENT_PROVIDER=slack` |

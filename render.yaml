@@ -13,6 +13,8 @@ services:
         sync: false
       - key: APP_SESSION_TTL_SECONDS
         value: 3600
+      - key: CHAT_CLIENT_DEMO_API_KEY
+        sync: false
       - key: CHAT_CLIENT_PROVIDER
         value: telegram
       - key: CHAT_CLIENT_STORE_PATH

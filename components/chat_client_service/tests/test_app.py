@@ -143,6 +143,7 @@ def auth_test_env(monkeypatch: pytest.MonkeyPatch) -> Generator[None, None, None
     monkeypatch.setenv("APP_SESSION_SECRET", "app-secret")
     monkeypatch.setenv("CHAT_CLIENT_STORE_PATH", ":memory:")
     monkeypatch.delenv("TELEGRAM_UPDATE_MODE", raising=False)
+    monkeypatch.delenv("CHAT_CLIENT_DEMO_API_KEY", raising=False)
     client.cookies.clear()
     get_store().clear()
     yield
@@ -218,16 +219,26 @@ def test_openapi_hides_html_pages_and_declares_all_auth_schemes() -> None:
         "in": "header",
         "name": "X-Session-ID",
     }
+    assert schemes["DemoAPIKeyHeader"] == {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Demo-API-Key",
+    }
     assert schemes["APIKeyCookie"] == {
         "type": "apiKey",
         "in": "cookie",
         "name": "chat_client_session",
     }
-    # Protected chat routes must advertise all three schemes so Try-It-Out
+    # Protected chat routes must advertise every scheme so Try-It-Out
     # works regardless of which credential the user pastes into Authorize.
     chat_security = schema["paths"]["/chat/messages"]["get"]["security"]
     scheme_names = {next(iter(entry.keys())) for entry in chat_security}
-    assert scheme_names == {"HTTPBearer", "APIKeyHeader", "APIKeyCookie"}
+    assert scheme_names == {
+        "HTTPBearer",
+        "APIKeyHeader",
+        "DemoAPIKeyHeader",
+        "APIKeyCookie",
+    }
 
 
 def test_health_request_emits_success_telemetry() -> None:
@@ -973,6 +984,29 @@ def test_auth_me_decodes_local_token() -> None:
 
     assert response.status_code == 200
     assert response.json()["telegram_id"] == "42"
+
+
+def test_demo_api_key_authenticates_when_configured(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Render demo API key can authenticate Swagger without Telegram login."""
+    monkeypatch.setenv("CHAT_CLIENT_DEMO_API_KEY", "demo-secret")
+
+    response = client.get("/auth/me", headers={"X-Demo-API-Key": "demo-secret"})
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "telegram_id": "demo",
+        "username": "demo",
+        "name": "Demo User",
+    }
+
+
+def test_demo_api_key_is_disabled_when_unconfigured() -> None:
+    """The demo key header has no effect unless the env var is set."""
+    response = client.get("/auth/me", headers={"X-Demo-API-Key": "demo-secret"})
+
+    assert response.status_code == 401
 
 
 def test_decode_app_token_omits_null_optional_claims() -> None:

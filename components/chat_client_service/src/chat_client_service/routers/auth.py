@@ -1,8 +1,10 @@
 """Telegram OIDC authentication routes."""
 
 import base64
+import hmac
 import html
 import json
+import os
 import secrets
 import time
 from typing import Annotated
@@ -46,6 +48,7 @@ from chat_client_service.oidc import (
     complete_login_library,
     complete_telegram_hash_login,
     decode_app_token,
+    issue_app_token,
 )
 from telegram_client_impl.client import get_bot_login_target
 from telegram_client_impl.store import StoredChannel, get_store
@@ -62,6 +65,11 @@ _TOKEN_TYPE_BEARER = "bearer"  # noqa: S105
 # and raises 401 only if none of them yield a valid token.
 _bearer = HTTPBearer(auto_error=False)
 _session_header = APIKeyHeader(name="X-Session-ID", auto_error=False)
+_demo_header = APIKeyHeader(
+    name="X-Demo-API-Key",
+    scheme_name="DemoAPIKeyHeader",
+    auto_error=False,
+)
 _session_cookie = APIKeyCookie(name=_APP_SESSION_COOKIE, auto_error=False)
 
 
@@ -77,6 +85,7 @@ def get_current_token(
     ],
     config: Annotated[OidcConfig, Depends(get_oidc_config)],
     x_session_id: Annotated[str | None, Depends(_session_header)] = None,
+    x_demo_api_key: Annotated[str | None, Depends(_demo_header)] = None,
     chat_client_session: Annotated[str | None, Depends(_session_cookie)] = None,
 ) -> str:
     """Return the validated Bearer token or raise 401."""
@@ -85,6 +94,16 @@ def get_current_token(
         session_id = x_session_id or chat_client_session
         if session_id is not None:
             token = get_store().token_for_session(session_id=session_id)
+        if token is None and _valid_demo_api_key(x_demo_api_key):
+            token = issue_app_token(
+                config=config,
+                claims={
+                    "id": "demo",
+                    "sub": "demo",
+                    "preferred_username": "demo",
+                    "name": "Demo User",
+                },
+            )
     else:
         token = credentials.credentials
     if token is None:
@@ -92,6 +111,13 @@ def get_current_token(
     if decode_app_token(config=config, token=token) is None:
         raise _unauthorized()
     return token
+
+
+def _valid_demo_api_key(candidate: str | None) -> bool:
+    expected = os.getenv("CHAT_CLIENT_DEMO_API_KEY", "").strip()
+    if not expected or candidate is None:
+        return False
+    return hmac.compare_digest(candidate.strip(), expected)
 
 
 def get_current_claims(
