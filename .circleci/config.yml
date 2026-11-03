@@ -1,0 +1,66 @@
+version: 2.1
+
+orbs:
+  python: circleci/python@2.1.1
+
+jobs:
+  test:
+    docker:
+      - image: cimg/python:3.10
+    environment:
+      # Set TELEGRAM_E2E_ENABLED=1 to run E2E. Add TELEGRAM_API_ID,
+      # TELEGRAM_API_HASH, TELEGRAM_BOT_TOKEN in CircleCI project settings.
+      TELEGRAM_E2E_ENABLED: "1"
+    steps:
+      - checkout
+      - run:
+          name: Install uv
+          command: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Add uv to PATH
+          command: echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: uv sync --all-extras
+      - run:
+          name: Run linting
+          command: uv run ruff check .
+      - run:
+          name: Format check
+          command: uv run ruff format --check .
+      - run:
+          name: Run type checking
+          command: uv run mypy components tests
+      - run:
+          name: Run tests
+          command: |
+            mkdir -p test-results
+            uv run pytest --junitxml=test-results/pytest.xml --cov=components --cov-report=xml
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: coverage.xml
+
+  docs:
+    docker:
+      - image: cimg/python:3.10
+    steps:
+      - checkout
+      - run:
+          name: Install uv
+          command: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - run:
+          name: Add uv to PATH
+          command: echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$BASH_ENV"
+      - run:
+          name: Install dependencies
+          command: uv sync --extra docs
+      - run:
+          name: Build documentation
+          command: uv run mkdocs build
+
+workflows:
+  main:
+    jobs:
+      - test
+      - docs

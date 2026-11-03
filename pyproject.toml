@@ -1,0 +1,94 @@
+[project]
+name = "chat-client"
+version = "0.1.0"
+description = "A chat client interface and implementation"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Team 4"}
+]
+dependencies = ["telegram-client-impl"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.3.0",
+    "mypy>=1.8.0",
+]
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.5.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["components/chat_client_api/src/chat_client_api"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "D203",   # incompatible with D211 (no-blank-line-before-class); ignoring D203
+    "D213",   # incompatible with D212 (multi-line-summary-first-line); ignoring D213
+    "S101",   # allow `assert` — used extensively in pytest tests
+    "COM812", # trailing comma enforcement conflicts with ruff formatter
+    "ISC001", # implicit string concatenation check conflicts with ruff formatter
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["chat_client_api", "telegram_client_impl"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = [
+    "INP001",   # test directories intentionally omit __init__.py per assignment
+    "PLR2004",  # allow magic values in test assertions
+    "S106",     # allow fake tokens in test fixtures
+    "SLF001",   # allow accessing _client for mocking in tests
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "components/chat_client_api/tests", "components/telegram_client_impl/tests"]
+pythonpath = [".", "components/chat_client_api/src", "components/telegram_client_impl/src"]
+markers = [
+    "e2e: marks end-to-end tests that may require external credentials",
+]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+
+[[tool.mypy.overrides]]
+module = [
+    "telethon",
+    "telethon.*",
+]
+ignore_missing_imports = true
+
+[tool.uv.workspace]
+members = ["components/chat_client_api", "components/telegram_client_impl"]
+
+[tool.uv.sources]
+chat-client-api = { workspace = true }
+telegram-client-impl = { workspace = true }
+
+[tool.coverage.run]
+source = ["components"]
+branch = true
+omit = ["*/tests/*"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
